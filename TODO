@@ -1,0 +1,25 @@
+
+1.)  Done  2016/10/11
+   Clean up and simplify load.c.
+
+2.)  Done with -O3
+   Make Makefile determine automatically when to use defines
+   for different TACC systems.   -- no longer needed
+   The load() function requires reasonal compiler optimization
+
+3.  Done
+   Allow  *_affinity.c drivers to query environment variables
+   for nsec, etc.3.
+
+4.) 
+   Allow user to specify insertion of more mask header lines
+   through environment variables.
+
+
+-w #         --wait-time #       CMASK_WAIT=#
+-h           --help              CMASK_HELP=
+-l cores/smt --listby cores|smt  CMASK_LISTBY=cores|smt
+
+-p fast/slow --print=fast|slow   CMASK_PRINT=fast|slow
+
+-s slow       --slow             CMASK_SLOW=
