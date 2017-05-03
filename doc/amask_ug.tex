@@ -153,8 +153,8 @@ Texas Advanced Computing Center (TACC), Kent F. Milfeld. \cite{amask}
 \tableofcontents
 
 \chapter{Installation}
-Amask is easy to build. Execute \verb+make+  to build the stand-alone executables, 
-and a library for those who want to instrument their code.
+Amask is easy to build. Execute \verb+make+  to build the stand-alone executables 
+and a library for those who want to instrument their application.
 
 Download the github repository\footnote{\href{https://github.com/TACC/amask}
 {https://github.com/TACC/amask}} by clicking on the ``Download ZIP'' file, 
@@ -197,7 +197,7 @@ will be placed in \verb+amask/lib+. Include \verb+.../amask/bin+ in your \verb+P
 %unless the \verb+AMASK_DIR=...+ has been modified in the Makefile.
 
 \FloatBarrier
-\chapter{Process thread affinity mask for a parallel execution}
+\chapter{Process Thread Affinity Mask for a Parallel Execution}
 
 
 Execute one of the stand-alone executables, \verb+omp_affinity+, \verb+mpi_affinity+, or
@@ -210,8 +210,8 @@ that will occur for your program execution (provided the application doesn't adj
 
 In Listing 2.1
 a batch job runs the \verb+mpi_affinity+ executable before running an application, to observe
-the affinity mask for each rank that the application (my\_app) will have.
-By removing the \verb+my_app+ execution line and requesting less time for the batch job, you
+the affinity mask for each rank that the application (\verb+my_mpiapp+) will have.
+By removing the \verb+my_mpiapp+ execution line and requesting less time for the batch job, you
 can quickly discover the default affinity mask for the parallel environment. 
 You can adjust affinity environment variables and quickly assess their impact on 
 the affinity masks for your application.  
@@ -228,7 +228,7 @@ the affinity masks for your application.
      #Batch Script for TACC machine
         ...
       mpirun ./mpi_affinity    #ibrun ./mpi_affinity #@TACC
-      mpirun ./my_app          #ibrun ./my_app       #@TACC
+      mpirun ./my_mpiapp       #ibrun ./my_mpiapp    #@TACC
 
 \end{code}
 
@@ -266,7 +266,7 @@ The output in Listing \ref{amaskdefaultmpienv} is for an 8-rank MPI execution on
 platform with 2 sockets, 8 cores/socket, no hyperthreading, and processor ids 0-7 
 on socket 1 and 8-15 on socket 2.  
 One can derive these details from \verb+lstopo+.  
-Figure \ref{fig:lstopo1} shows an \verb+lstopo+ report for this system (Sandy Bridge compute 
+Figure \ref{fig:lstopo} shows an \verb+lstopo+ report for this system (Sandy Bridge compute 
 node on the TACC Stampede machine.)
 The same information can be extracted from the contents of the \verb+/proc/cpuinfo+ file.
 The \verb+lscpu+ utilitly provides the number of sockets, cores and SMT threads, without
@@ -282,15 +282,15 @@ proc-id assignments.
 
 The MPI processes are executing on processors (cores) 0-7. 
 The rows of the matrix are labeled by the MPI ranks and the columns represent the
-machine's proc-ids (\verb+PUs+ in \ref{lstopo1}) from 0 to Nprocs-1, where Nprocs is 
+machine's processor-ids (\verb+Core P#+ in \ref{fig:lstopo1}) from 0 to Nprocs-1, where Nprocs is 
 the number \verb+PUs+ from \verb+lstopo+ or the number of processors reported 
 in \verb+/proc/cpuinfo+.  
 For this run there are 8 rows, one for each of the 8 MPI ranks (0000 through 0007).
-If there are Nprocs, there are Nprocs character locations in each row, 
-representing processors 0 - Nprocs-1.
+Since there are 16 processors (Nprocs), there are 16 character locations in each row, 
+representing processors 0 - 15.
 Numbers in a row position mean that the mask bit is set for the the corresponding
-processor and the MPI process (rank), listed at the beginning of the row can 
-execute there. When multiple numbers 
+processor (for the MPI rank, process, listed at the beginning of the row can 
+execute there). When multiple numbers 
 are in a row (multiple bits set) it means that the rank can run (float) on any 
 of those processors. (The - characters indicate the mask bits are not set.)
 The processor id number is determined by adding the digit in the row to the number
@@ -308,13 +308,13 @@ $ ibrun  mpi_affinity   # @TACC
 
 
       Each row of matrix is an Affinity mask. 
-      A set mask bit = matrix digit + column # in |...|
-rank |         |   10    |
-0000 0---------------
+      A set mask bit = matrix digit + column group # in |...|
+rank |    0    |   10    |
+0000 0---------------   
 0001 -1--------------
 0002 --2-------------
-0003 ---3------------
-0004 ----4-----------
+0003 ---3------------    
+0004 ----4-----------   #digit + group # in header = proc-id
 0005 -----5----------
 0006 ------6---------
 0006 -------7--------
@@ -327,10 +327,10 @@ the \verb+tacc_affinity+ script on the ibrun launcher line (\verb+ibrun tacc_aff
 There are other ways to 
 change the affinity, such as using another launcher, compiling with 
 a different mpi library, or setting MPI environment variables.  In this case 
-\verb+tacc_affinity+ positions the first 4 task on socket 0, and allows 
-each rank to float on any of the processors (cores), by setting the first 
-8 bits of the mask for each of ranks 0-7.  Ranks 8-15
-execute on the second socket and are allowed to float across all cores 
+\verb+tacc_affinity+ positions the first 4 tasks on socket 0, and allows 
+each rank to float on any of the processors (cores) of the socket, by setting the first 
+8 bits of the mask for each of the 4 ranks, 0-3.  Ranks 4-7
+execute on the second socket and are allowed to float across all cores (proc-ids 8-15) 
 of the socket.  (\verb+tacc_affinity+ is not part of the amask utilities.)
 
 \begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=TACC Tailored Environment through tacc-affinity\label{amasktaccenv}]
@@ -340,15 +340,15 @@ $ # + tacc_affinity -- sets MPI affinity @TACC
 $ ibrun tacc_affinity mpi_affinity   # @TACC
 
       Each row of matrix is an Affinity mask. 
-      A set mask bit = matrix digit + column # in |...|
-rank |         |   10    |
+      A set mask bit = matrix digit + column group # in |...|
+rank |   0     |   10    |
 0000 01234567--------       # -- mask to run anyplace on socket1
 0001 01234567--------       # rank 1 can execute on any of 0-7 cores
 0002 01234567--------       # rank 2 can execute on any of 0-7 cores 
 0003 01234567--------       # ...
 0004 --------89012345       # -- mask to run anyplace on socket2
-0005 --------89012345       # rank 5 can execute on any of 7-15 cores 
-0006 --------89012345       # these are cores 8, 9, 10-15  
+0005 --------89012345       # rank 5 can execute on any of cores 8-15
+0006 --------89012345       # Bits are for proc-ids (cores)  8, 9, 10-15  
 0007 --------89012345       # Read as 8+0, 9+0, 0+10, 0+10, ... 10+15
 
 \end{code}
@@ -358,8 +358,8 @@ hundreds of hardware threads, such as the Intel KNL processor.  At TACC, Stamped
 has 4,200 PHI 7250 processors (KNLs), each with 272 hardware threads (68 cores x 
 4 SMT threads/core).  Before version 1.0  amask would display rows of 272 proc-ids 
 (processor ids=hardware threads); but that became a bit unwieldy for users to 
-display on laptops.  Now, by default, a matrix of proc-ids versus cores is displayed.
-If there are n SMTs/core, there will be n rows for each proc-id listed (on the left).
+display on laptops.  Now, by default, a matrix of core-ids versus process-ids is displayed.
+If there are n SMTs/core, there will be n rows for each process (rank/thread-id) listed (on the left).
 For the KNL described above there will be 4 rows displayed for each process 
 (corresponding to  proc-id {0-67}, {68-135}, {136-203}, and {204-272}) with the header displaying core-ids.  
 This is shown in Listing 2.5.
@@ -373,7 +373,7 @@ $ export OMP_PROC_BIND=close8
 $ ./omp_affinity
 
       Each row of matrix is an Affinity mask. A set mask bit = matrix digit + column # in |...|
-thrd |         |   10    |   20    |   30    |   40    |   50    |   60    |
+thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
 0000 0===================================================================
      --------------------------------------------------------------------
      --------------------------------------------------------------------
@@ -410,15 +410,15 @@ thrd |         |   10    |   20    |   30    |   40    |   50    |   60    |
 \end{smallercode}
 
 This display is basically core occupation -- something users found they would rather see than 272-character masks.
-The proc-id numbers for the 2nd, 3rd and 4th row can be obtained in the usual 
-way, but 68, 136, and 204 must be added to the respective row.  
-When you need to work with the mask and know the proc-ids, it is much easier 
+The proc-id numbers for the 2nd, 3rd and 4th row can be obtained in the usual
+manner, but 68, 136, and 204 must be added to the respective row.  
+When you need to work directly with the mask and easily determine the proc-ids, it is much easier 
 to use the mask display by using the \verb+-ls+ option on command line. 
 
 \FloatBarrier
 \chapter{Using the amask Library}
 
-The basic operations used for reporting masking in the \verb+amask+ programs
+The basic operations used for reporting masks by the \verb+amask+ executables
 were collected into a library, so that users
 could instrument there own applications to display the masks of MPI processes
 and OpenMP threads.
