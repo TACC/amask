@@ -9,7 +9,6 @@ INTERMEDIATE_FILES=$(Mug).pdf \
                    $(Mug).out \
                    $(Mug).log \
                    $(Mug).aux \
-                   $(Mug)-$(version).pdf
 
 
 #.PHONY : $(Mug).pdf

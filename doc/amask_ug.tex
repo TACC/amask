@@ -456,18 +456,18 @@ it is to include them in your own program. The snippets below show how they are 
     }
 
  // Pure MPI code
-    MPI_Init(&argc, &argv);
+    MPI_Init(NULL,NULL);
 
        mpi_report_mask();
     ...
     MPI_Finalize();
 
  // Hybrid code
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    MPI_Init_thread(NULL,NULL, MPI_THREAD_MULTIPLE, &provided);
 
     mpi_report_mask();  // helpful: reports ONLY MPI process masks
 
-   #pragma omp parallel private(thrd,nthrds,ierr)
+   #pragma omp parallel
    {
       hybrid_report_mask();
       ...
@@ -480,7 +480,7 @@ it is to include them in your own program. The snippets below show how they are 
 \section{Useful Utilities}
 \begin{itemize}
 \item load\_cpu\_nsec( nsec )   --- Puts load on process/thread for nsec seconds
-\item map\_to\_cpuid(cpu-id)   --- Sets process/thread to execute on cpuid
+\item map\_to\_procid(proc-id)   --- Sets process/thread to execute on proc-id
 \item gtod\_timer()           --- Easy to use Get Time of Day clock
 \item tsc() --- Returns time stamp counter value
 \end{itemize}
@@ -488,10 +488,10 @@ it is to include them in your own program. The snippets below show how they are 
 A thread or process that calls \verb+load_cpu_nsec(int nsec)+ will execute integer
 operations (a load) for nsec seconds.  nsec must be zero or a positive integer.  Use the
 \verb+cmdln_get_nsec_or_help(int * nsec, int argc, char * argv[])+ function to extract an
-integer from the command line for nsec (e.g. a.out 10).
+integer from the command line for nsec (e.g. \verb+mpi_affinity+ 10).
 
 
-A thread or process that calls \verb+map_to_cpuid(int proc-id)+ will assign the
+A thread or process that calls \verb+map_to_procid(int proc-id)+ will assign the
 calling thread or process to execute on proc-id, by setting the appropriate
 bit in the scheduling mask.  For example, in a parallel region the unique
 thread-id returned from \verb+omp_get_thread_num()+ can be used in an
@@ -512,9 +512,11 @@ not meant to be used as as a general timer, since the processor frequency may ch
 
 
 \section{Other things you should know}
-For MPI executables, compiled with IMPI (Intel MPI), 
-you can set I\_MPI\_DEBUG=4, and the execution will
-report the masking for list of proc-ids for each MPI process. 
+Build \verb+amask+ with the same MPI library that your 
+application will use.  On systems with multi-vendor MPI libraries,
+build amap for each vendor version you will use.
+With IMPI (Intel MPI) you can set I\_MPI\_DEBUG=4 to
+separately report the mask (and other information) for each MPI process. 
 
 
 \FloatBarrier
