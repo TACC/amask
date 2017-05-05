@@ -266,7 +266,7 @@ The output in Listing \ref{amaskdefaultmpienv} is for an 8-rank MPI execution on
 platform with 2 sockets, 8 cores/socket, no hyperthreading, and processor ids 0-7 
 on socket 1 and 8-15 on socket 2.  
 One can derive these details from \verb+lstopo+.  
-Figure \ref{fig:lstopo} shows an \verb+lstopo+ report for this system (Sandy Bridge compute 
+Figure \ref{fig:lstopo1} shows an \verb+lstopo+ report for this system (Sandy Bridge compute 
 node on the TACC Stampede machine.)
 The same information can be extracted from the contents of the \verb+/proc/cpuinfo+ file.
 The \verb+lscpu+ utilitly provides the number of sockets, cores and SMT threads, without
@@ -280,17 +280,18 @@ proc-id assignments.
 \caption{Hardware information from lstopo\label{fig:lstopo1}}
 \end{figure}
 
-The MPI processes are executing on processors (cores) 0-7. 
+Listing \ref{fig:lstopo} shows  MPI processes executing on processors (cores) 0-7. 
 The rows of the matrix are labeled by the MPI ranks and the columns represent the
-machine's processor-ids (\verb+Core P#+ in \ref{fig:lstopo1}) from 0 to Nprocs-1, where Nprocs is 
-the number \verb+PUs+ from \verb+lstopo+ or the number of processors reported 
-in \verb+/proc/cpuinfo+.  
+machine's processor-ids (\verb+Core P#+ in Figure \ref{fig:lstopo1}) from 0 to Nprocs-1
+% where Nprocs is the number \verb+PUs+ from \verb+lstopo+ or the number of processors reported 
+% in Figure \verb+/proc/cpuinfo+.  
 For this run there are 8 rows, one for each of the 8 MPI ranks (0000 through 0007).
 Since there are 16 processors (Nprocs), there are 16 character locations in each row, 
-representing processors 0 - 15.
-Numbers in a row position mean that the mask bit is set for the the corresponding
-processor (for the MPI rank, process, listed at the beginning of the row can 
-execute there). When multiple numbers 
+representing the mask bits for processors 0 - 15.
+A digit in a row position means that the mask bit is set for the the corresponding
+processor, and the MPI process rank listed at the beginning of the row can execute there.
+% (for the MPI rank, process, listed at the beginning of the row can execute there). 
+When multiple numbers 
 are in a row (multiple bits set) it means that the rank can run (float) on any 
 of those processors. (The - characters indicate the mask bits are not set.)
 The processor id number is determined by adding the digit in the row to the number
@@ -348,7 +349,7 @@ rank |   0     |   10    |
 0003 01234567--------       # ...
 0004 --------89012345       # -- mask to run anyplace on socket2
 0005 --------89012345       # rank 5 can execute on any of cores 8-15
-0006 --------89012345       # Bits are for proc-ids (cores)  8, 9, 10-15  
+0006 --------89012345       # Bits are for proc-ids (cores) 8,9,10-15  
 0007 --------89012345       # Read as 8+0, 9+0, 0+10, 0+10, ... 10+15
 
 \end{code}
@@ -357,7 +358,7 @@ A more challenging situation is the determination of the masks on a system with
 hundreds of hardware threads, such as the Intel KNL processor.  At TACC, Stampede2 
 has 4,200 PHI 7250 processors (KNLs), each with 272 hardware threads (68 cores x 
 4 SMT threads/core).  Before version 1.0  amask would display rows of 272 proc-ids 
-(processor ids=hardware threads); but that became a bit unwieldy for users to 
+(processor ids=hardware threads), but that became a bit unwieldy for users to 
 display on laptops.  Now, by default, a matrix of core-ids versus process-ids is displayed.
 If there are n SMTs/core, there will be n rows for each process (rank/thread-id) listed (on the left).
 For the KNL described above there will be 4 rows displayed for each process 
@@ -441,7 +442,7 @@ require any arguments or include files:
 
 
 However, to report masks for hybrid code, it may be necessary
-to initialized MPI with the \verb+MPI_Init_thread()+ routine. View the \verb+amask+ codes to see how easy
+to initialize MPI with the \verb+MPI_Init_thread()+ routine. View the \verb+amask+ codes to see how easy
 it is to include them in your own program. The snippets below show how they are to be used:
 
 
@@ -507,7 +508,7 @@ The function \verb+tsc()+ returns an 8-byte integer (Unix) time stamp count from
 the \verb+rdtsc+ instruction. Use this to capture the difference between the counts for
 determining 
 the cost a of a small set of operations (instructions, code statements). This is
-not meant to be used as as a general timer, since the processor frequency may change.
+not meant to be used as a general timer, since the processor frequency may change.
 
 
 
