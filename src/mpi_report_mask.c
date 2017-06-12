@@ -38,7 +38,7 @@ int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
 
-int mpi_report_mask(){
+int amask_mpi(){
 
 int thrd, nthrds, ncpus;
 int rank, nranks;
@@ -133,4 +133,4 @@ int  tpc;      //hwthreads/core
 
 }
 
-void mpi_report_mask_(){ (void) mpi_report_mask(); }
+void amask_mpi_(){ (void) amask_mpi(); }

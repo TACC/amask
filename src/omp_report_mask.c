@@ -23,7 +23,7 @@ void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int
 int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
-void omp_report_mask(){
+void amask_omp(){
 
 int nthrds, thrd;  //Thread info
 
@@ -80,4 +80,4 @@ int  tpc;   // hwthreads/core
 
 }
 
-void omp_report_mask_(){ omp_report_mask(); }
+void amask_omp_(){ amask_omp(); }

@@ -48,7 +48,7 @@ int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
 
-int hybrid_report_mask(){
+int amask_hybrid(){
 
                         // General
 int i,j,ierr;
@@ -86,7 +86,7 @@ int  tpc;   // hwthreads/core
    MPI_Initialized(&in_mpi);
    in_omp = omp_in_parallel();
    if(in_mpi == 0){
-     printf("ERROR: ***** Must call hybrid_report_mask() in MPI program. ***** \n");
+     printf("ERROR: ***** Must call amask_hybrid() in MPI program. ***** \n");
      exit(1);
    }
 
@@ -99,7 +99,7 @@ int  tpc;   // hwthreads/core
         printf("         ***** When using 1 thread, Intel OpenMP MAY report "
                               "\"not in a parallel region\" (Uh!)***** \n");
         printf("         ***** Each row will only have a rank number (no \"0\" thread_id). \n");
-        printf("WARNING: ***** Unspecified results if hybrid_report_mask "
+        printf("WARNING: ***** Unspecified results if amask_hybrid "
                               "not called in parallel region of MPI code section. ***** \n");
      }
    }
@@ -206,4 +206,4 @@ int  tpc;   // hwthreads/core
 
 }
 
-void hybrid_report_mask_(){ (void) hybrid_report_mask(); }
+void amask_hybrid_(){ (void) amask_hybrid(); }
