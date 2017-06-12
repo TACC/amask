@@ -2,7 +2,9 @@ bin/
 lib/
 src/*.o
 src/*.a
-src/*_affinity
+src/*_mpi
+src/*_omp
+src/*_hybrid
 *.bak
 junk
 backup

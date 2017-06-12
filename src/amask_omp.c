@@ -6,7 +6,7 @@
 
    Uses maskeraid utilities  github.com/TACC/maskeraid
       map_to_procid(cpu_id):  will set current thread to cpu_id
-      omp_report_mask():     reports masks of the threads
+      amask_omp():     reports masks of the threads
       load_cpu_nsec(nsec): load the cpu for nsec (default 10)
 
 */
@@ -14,7 +14,7 @@
 /*   omp_affinity.c is a driver 
      1.) Get line arguments (optional):  help or number of seconds for load
      2.) Start OpenMP parallel region
-           omp_report_mask() reports masks for each thread
+           amask_omp() reports masks for each thread
      3.) Set a work load on each thread
      4.) Finish parallel region 
                                          Kent Milfeld 12/16/15
@@ -28,7 +28,7 @@
 #include "opts.h"
 
 void load_cpu_nsec(int nsec);
-void omp_report_mask();
+void amask_omp();
 int  map_to_procid( int icore);
 
 
@@ -51,7 +51,7 @@ int ierr;          // Error number
    // procid  =   thrd;                      // set procid to thread number (thrd)
    // ierr   =   map_to_procid( procid );     // set your own affinity here 
 
-      omp_report_mask();        // Call mask reporter
+      amask_omp();        // Call mask reporter
       load_cpu_nsec( nsec );    // Load up rank process so user can watch top.
    }
 

@@ -5,8 +5,8 @@
    utilities like top  (e.g. execute top, then hit the 1 key).
 
    Uses maskeraid utilities  github.com/TACC/maskeraid
-      mpi_report_mask():     in pure MPI region to report MPI process masks
-      hybrid_report_mask():  in OpenMP parallel region to report thread masks 
+      amask_mpi():     in pure MPI region to report MPI process masks
+      amask_hybrid():  in OpenMP parallel region to report thread masks 
       map_to_procid( procid ): sets thread affinity to cpu_id 
                              (see /proc/cpuinfo, or hwloc)
       load_cpu_nsec(nsec):   loads the cpu for nsec (default 10)
@@ -15,9 +15,9 @@
      1.) Get line arguments (optional):  help or number of seconds for load
      2.) Start MPI
            Affinity for MPI processes can be reset here.
-           mpi_report_mask() reports MPI process masks
+           amask_mpi() reports MPI process masks
      3.) Start OpenMP parallel region
-           hybrid_report_mask() reports masks for each thread of each
+           amask_hybrid() reports masks for each thread of each
            MPI process.
            
      4.) Set a work load on each thread
@@ -39,9 +39,9 @@
 
 
 void load_cpu_nsec(int nsec);
-void hybrid_report_mask(void);
+void amask_hybrid(void);
 int  map_to_procid( int icore);
-void mpi_report_mask(void); 
+void amask_mpi(void); 
 
 
 int main(int argc, char **argv){
@@ -61,7 +61,7 @@ int ierr;          // Error number
    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   mpi_report_mask();   // Report JUST MPI process masks
+   amask_mpi();   // Report JUST MPI process masks
 
    #pragma omp parallel private(thrd,nthrds,ierr)
    {
@@ -71,7 +71,7 @@ int ierr;          // Error number
   //  procid  =   thrd;                     // set procid to thread number (thrd)
   //  ierr   =   map_to_procid( procid );    // set your own affinity here 
 
-      hybrid_report_mask();        // Call mask reporter
+      amask_hybrid();        // Call mask reporter
 
       load_cpu_nsec( nsec );       // Load up rank process so user can watch top.
 

@@ -1,3 +1,5 @@
+#
+# Intel Compilers and MPI
 CC_SER  =   icpc -g
 CC_MPI  = mpicxx -g
 CC_OMP  =   icpc -qopenmp -g
@@ -20,6 +22,19 @@ ifeq ($(TACC_SYSTEM),ls5)
    LOAD_X=-xhost
    LOAD_DEF=-DLS5
 endif
+ifeq ($(NERSC_HOST),cori)
+   LOAD_X=-xhost
+   LOAD_DEF=-DSPKNL
+
+   CC_SER  = CC -g
+   CC_MPI  = CC -g
+   CC_OMP  = CC -qopenmp -g
+   CC_HYB  = CC -qopenmp -g
+
+   LD_MPI  = CC -g
+   LD_OMP  = CC -qopenmp -g
+   LD_HYB  = CC -qopenmp -g
+endif
 
 #rm -fr $(EXES) $(DRIVER_OBJECTS) $(LIB_OBJECTS) $(LIB) *.mod
 
@@ -30,7 +45,7 @@ endif
  CFLAGS	= 
 LDFLAGS	= 
 
-DRIVER_SOURCES = mpi_affinity.c omp_affinity.c hybrid_affinity.c 
+DRIVER_SOURCES = amask_mpi.c amask_omp.c amask_hybrid.c 
 DRIVER_OBJECTS = $(DRIVER_SOURCES:.c=.o)
 
 #LIB_SOURCES=boundto.c cmdln_args.c load.c map_to_procid.c print_mask.c timers.c mpi_report_mask.c omp_report_mask.c hybrid_report_mask.c opts.cpp
@@ -39,24 +54,24 @@ DRIVER_OBJECTS = $(DRIVER_SOURCES:.c=.o)
  LIB_OBJECTS =boundto.o             load.o map_to_procid.o print_mask.o timers.o mpi_report_mask.o omp_report_mask.o hybrid_report_mask.o opts.o
 
 
-LIB     = maskeraid.a
+LIB     = amask.a
 EXES	= $(DRIVER_SOURCES:.c=)
-#EXES = mpi_affinity omp_affinity hybrid_affinity 
+#EXES = amask_mpi amask_omp amask_hybrid 
 
 all: $(EXES)
 
-mpi_affinity    :            mpi_affinity.o                       $(LIB)
-	$(LD_MPI) $(LDFLAGS_MPI)  mpi_affinity.o    -o mpi_affinity    $(LIB)
+amask_mpi    :            amask_mpi.o                       $(LIB)
+	$(LD_MPI) $(LDFLAGS_MPI)  amask_mpi.o    -o amask_mpi    $(LIB)
 	mkdir -p ../bin
-	cp -p  mpi_affinity ../bin
-omp_affinity    :            omp_affinity.o                       $(LIB)
-	$(LD_OMP) $(LDFLAGS_OMP)  omp_affinity.o    -o omp_affinity    $(LIB)
+	cp -p  amask_mpi ../bin
+amask_omp    :            amask_omp.o                       $(LIB)
+	$(LD_OMP) $(LDFLAGS_OMP)  amask_omp.o    -o amask_omp    $(LIB)
 	mkdir -p ../bin
-	cp -p  omp_affinity ../bin
-hybrid_affinity :            hybrid_affinity.o                    $(LIB)
-	$(LD_HYB) $(LDFLAGS_HYB)  hybrid_affinity.o -o hybrid_affinity $(LIB)
+	cp -p  amask_omp ../bin
+amask_hybrid :            amask_hybrid.o                    $(LIB)
+	$(LD_HYB) $(LDFLAGS_HYB)  amask_hybrid.o -o amask_hybrid $(LIB)
 	mkdir -p ../bin
-	cp -p  hybrid_affinity ../bin
+	cp -p  amask_hybrid ../bin
 
 
 $(LIB) : $(LIB_OBJECTS)
@@ -64,17 +79,17 @@ $(LIB) : $(LIB_OBJECTS)
 	mkdir -p ../lib
 	cp -p $(LIB) ../lib
 
-mpi_affinity.o    : mpi_affinity.c 
+amask_mpi.o    : amask_mpi.c 
 	$(CC_MPI) $(CFLAGS) -c $< -o $@
 mpi_report_mask.o : mpi_report_mask.c
 	$(CC_MPI) $(CFLAGS) -c $< -o $@
 
-omp_affinity.o    :  omp_affinity.c
+amask_omp.o    :  amask_omp.c
 	$(CC_OMP) $(CFLAGS) -c $< -o $@
 omp_report_mask.o :  omp_report_mask.c
 	$(CC_OMP) $(CFLAGS) -c $< -o $@
 
-hybrid_affinity.o    :  hybrid_affinity.c
+amask_hybrid.o    :  amask_hybrid.c
 	$(CC_HYB) $(CFLAGS) -c $< -o $@
 hybrid_report_mask.o :  hybrid_report_mask.c
 	$(CC_HYB) $(CFLAGS) -c $< -o $@

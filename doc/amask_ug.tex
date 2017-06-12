@@ -11,6 +11,7 @@
 \usepackage{listings}			  % Code Listings
 \usepackage{courier}
 \usepackage{graphicx}
+\usepackage[T1]{fontenc}
 \graphicspath{ {images/} }
 % inserting images: https://www.sharelatex.com/learn/Inserting_Images
 
@@ -197,19 +198,19 @@ will be placed in \verb+amask/lib+. Include \verb+.../amask/bin+ in your \verb+P
 %unless the \verb+AMASK_DIR=...+ has been modified in the Makefile.
 
 \FloatBarrier
-\chapter{Process Thread Affinity Mask for a Parallel Execution}
+\chapter{Process Affinity Masks for a Parallel Execution}
 
 
-Execute one of the stand-alone executables, \verb+omp_affinity+, \verb+mpi_affinity+, or
-\verb+hybrid_affinity+ in an OpenMP, MPI or hybrid environment, 
+Execute one of the stand-alone executables, \verb+amask_omp+, \verb+amask_mpi+, or \\
+\verb+amask_hybrid+ in an OpenMP, MPI or hybrid environment, 
 respectively, to obtain the expected affinity mask for each 
 process/thread for your program in the same environment.  That is,
 before you execute your program, execute the appropriate stand-alone affinity
 program to get a listing of the masks for each OpenMP thread and/or MPI process
-that will occur for your program execution (provided the application doesn't adjust affinity).
+that would occur for your program execution (provided the application doesn't adjust affinity).
 
 In Listing 2.1
-a batch job runs the \verb+mpi_affinity+ executable before running an application, to observe
+a batch job runs the \verb+amask_mpi+ executable before running an application, to observe
 the affinity mask for each rank that the application (\verb+my_mpiapp+) will have.
 By removing the \verb+my_mpiapp+ execution line and requesting less time for the batch job, you
 can quickly discover the default affinity mask for the parallel environment. 
@@ -217,7 +218,7 @@ You can adjust affinity environment variables and quickly assess their impact on
 the affinity masks for your application.  
 %If you can acquire an interactive session at your site,
 %you can simply adjust the affinity (through KMP\_AFFINITY, OMP\_PLACES, etc.) and run 
-%\verb+mpi_affinity+  to make sure your affinity adjustments are doing what you
+%\verb+amask_mpi+  to make sure your affinity adjustments are doing what you
 %think they should do.
 
 \begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=Listing affinity masks for MPI environment \label{batchamask}]
@@ -227,12 +228,12 @@ the affinity masks for your application.
          ...
      #Batch Script for TACC machine
         ...
-      mpirun ./mpi_affinity    #ibrun ./mpi_affinity #@TACC
-      mpirun ./my_mpiapp       #ibrun ./my_mpiapp    #@TACC
+      mpirun ./amask_mpi    #ibrun ./amask_mpi #@TACC
+      mpirun ./my_mpiapp    #ibrun ./my_mpiapp #@TACC
 
 \end{code}
 
-If a site allows users interactive access to batch nodes (see idev utility @TACC), then
+If a site allows users interactive access to batch nodes (see \verb+idev+ utility @TACC), then
 the amask commands can be run interactively. 
 Listing 2.2
 shows interactive executions to discover the affinity masks
@@ -242,11 +243,11 @@ MPI affinity environment variables set in the mpi launcher: mpirun, or ibrun at 
 
 \begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=Listing OpenMP/MPI and Hybrid masks\label{interactiveamask}]
 
-     export OMP_NUM_THREADS=2; omp_affinity   # pure OpenMP
+     export OMP_NUM_THREADS=2; amask_omp   # pure OpenMP
  
-     mpirun -np 4 mpi_affinity                # pure MPI
+     mpirun -np 4 amask_mpi                # pure MPI
  
-     export OMP_NUM_THREADS=2; mpirun -np 4 hybrid_affinity   # Hybrid
+     export OMP_NUM_THREADS=2; mpirun -np 4 amask_hybrid   # Hybrid
 
 \end{code}
  
@@ -280,9 +281,9 @@ proc-id assignments.
 \caption{Hardware information from lstopo\label{fig:lstopo1}}
 \end{figure}
 
-Listing \ref{fig:lstopo} shows  MPI processes executing on processors (cores) 0-7. 
+Listing \ref{fig:lstopo1} shows  MPI processes executing on processors (cores) 0-7. 
 The rows of the matrix are labeled by the MPI ranks and the columns represent the
-machine's processor-ids (\verb+Core P#+ in Figure \ref{fig:lstopo1}) from 0 to Nprocs-1
+machine's processor-ids (\verb+Core P#+ in Figure \ref{fig:lstopo1}) from 0 to Nprocs-1.
 % where Nprocs is the number \verb+PUs+ from \verb+lstopo+ or the number of processors reported 
 % in Figure \verb+/proc/cpuinfo+.  
 For this run there are 8 rows, one for each of the 8 MPI ranks (0000 through 0007).
@@ -294,22 +295,22 @@ processor, and the MPI process rank listed at the beginning of the row can execu
 When multiple numbers 
 are in a row (multiple bits set) it means that the rank can run (float) on any 
 of those processors. (The - characters indicate the mask bits are not set.)
-The processor id number is determined by adding the digit in the row to the number
+The processor id number is determined by adding the digit in the row to the ``group'' number
 directly above in the header. (This quirky approach allows us to represent a 
 processor's mask as a set of single characters (digits)
 for each bit, and allows one to determine the processor id (proc-id) number by a "look up"-- 
-adding the digit in the row to header value above).
+adding the digit in the row to header group value above).
 
 
 \begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=Default MPI Environment\label{amaskdefaultmpienv}]
 $ # 8 tasks requested, MVAPICH2 MPI
 
-$ mpirun mpi_affinity   # non-TACC
-$ ibrun  mpi_affinity   # @TACC
+$ mpirun amask_mpi   # non-TACC
+$ ibrun  amask_mpi   # @TACC
 
 
-      Each row of matrix is an Affinity mask. 
-      A set mask bit = matrix digit + column group # in |...|
+     Each row of matrix is an affinity mask. 
+     A set mask bit = matrix digit + column group # in |...|
 rank |    0    |   10    |
 0000 0---------------   
 0001 -1--------------
@@ -324,7 +325,7 @@ rank |    0    |   10    |
 
 The output in Listing \ref{amasktaccenv} is for the same platform as 
 \ref{amaskdefaultmpienv}, but the affinity environment has been changed with 
-the \verb+tacc_affinity+ script on the ibrun launcher line (\verb+ibrun tacc_affinity mpi_affinity+).
+the \verb+tacc_affinity+ script on the ibrun launcher line (\verb+ibrun tacc_affinity amask_mpi+).
 There are other ways to 
 change the affinity, such as using another launcher, compiling with 
 a different mpi library, or setting MPI environment variables.  In this case 
@@ -338,10 +339,11 @@ of the socket.  (\verb+tacc_affinity+ is not part of the amask utilities.)
 $ # 8 tasks requested, MVAPICH2 MPI 
 $ # + tacc_affinity -- sets MPI affinity @TACC
 
-$ ibrun tacc_affinity mpi_affinity   # @TACC
+$ ibrun tacc_affinity amask_mpi   # @TACC
 
-      Each row of matrix is an Affinity mask. 
-      A set mask bit = matrix digit + column group # in |...|
+     Each row of matrix is an Affinity mask. 
+     A set mask bit = matrix digit + column group # in |...|
+
 rank |   0     |   10    |
 0000 01234567--------       # -- mask to run anyplace on socket1
 0001 01234567--------       # rank 1 can execute on any of 0-7 cores
@@ -363,17 +365,20 @@ display on laptops.  Now, by default, a matrix of core-ids versus process-ids is
 If there are n SMTs/core, there will be n rows for each process (rank/thread-id) listed (on the left).
 For the KNL described above there will be 4 rows displayed for each process 
 (corresponding to  proc-id {0-67}, {68-135}, {136-203}, and {204-272}) with the header displaying core-ids.  
-This is shown in Listing 2.5.
+This is shown in Listing \ref{amasktaccknl}.
 
 %\begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=Process masks for 16 MPI task execution on 68-core KNL\label{amasktaccknl}]
 
 \begin{smallercode}[frame=single,breaklines=true,numbers=left,language=C,caption=Process masks for an 8-thread execution on 68-core KNL\label{amasktaccknl}]
 
 $ export OMP_NUM_THREADS=8
-$ export OMP_PROC_BIND=close8
-$ ./omp_affinity
+$ export OMP_PROC_BIND=close
+$ ./amask_omp
 
-      Each row of matrix is an Affinity mask. A set mask bit = matrix digit + column # in |...|
+     Each row of matrix is a mask for a Hardware Thread (hwt).
+     CORE ID  = matrix digit + column group # in |...|
+     A set mask bit (proc-id) = core id + add 68 to each additional row.
+
 thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
 0000 0===================================================================
      --------------------------------------------------------------------
@@ -411,32 +416,84 @@ thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
 \end{smallercode}
 
 This display is basically core occupation -- something users found they would rather see than 272-character masks.
-The proc-id numbers for the 2nd, 3rd and 4th row can be obtained in the usual
-manner, but 68, 136, and 204 must be added to the respective row.  
-When you need to work directly with the mask and easily determine the proc-ids, it is much easier 
+For each process the digits of all hardware-thread rows combine with the  group number in the header to give the
+core id. For a process, the sequence of rows corresponds to hardware thread ids, 0-(n-1), where n is the number of hardware 
+threads for each core. To obtain the proc-id for a particular row entry, add a multiple of the number of cores (68 in this case)
+to the core id, where the multiplier is the thread id number.  E.g. In Listing \ref{amasktaccknl} the proc-id for rank 6 is 1 (the core id)
+plus 2x68 (hardware thread id 2 x number of cores). 
+When you need to work directly with the mask to determine the proc-ids, it is much easier 
 to use the mask display by using the \verb+-ls+ option on command line. 
 
-\FloatBarrier
-\chapter{Using the amask Library}
+%The proc-id numbers for the 2nd, 3rd and 4th row can be obtained in the usual
+%manner, but 68, 136, and 204 must be added to the respective row (68, the number of cores, for each additional row).  
+%For each additional row of hardware threads add the number of cores to obtain the proc-ids within the row.)
+%To obtain the processor id add e row of hardware threads add the number of cores to obtain the proc-ids within the row.)
+\clearpage
+
+
+
+\section{amask Options}
+There are several useful options that can be used on the \verb+omp-+, \verb+mpi-+, and
+\verb+hybrid-affinity+ execution command lines.  
+
+By default, after the masks are printed to standard out, a load is created on each process
+for 10 seconds so that the location of the processes can be viewed with the \verb+top+ 
+utility. The duration of the load can be changed with the wait option (\verb+w+). Include
+the number of seconds (integer) as an argument to the option. 
+
+By default there is a delay between printing each map. The delay can be eliminated by specifying
+the fast argument for the printing option, \verb+-pf+.
+
+
+As described above, an argument of \verb+s+ with the listing \verb+-l+ option forces the 
+matrix listings to be Simultaneous Multi-Threads versus
+processes-- that is, affinity masks are listed with proc-ids. 
+
+When SMT is detected the listing defaults to a core versus process listing (with a
+separate line for each hardware thread in the core).  
+Add the header group number to the digit in each row to obtain the core-id.
+
+%, not the processor ids as found in the /proc/cpuinfo. 
 
 The basic operations used for reporting masks by the \verb+amask+ executables
 were collected into a library, so that users
 could instrument there own applications to display the masks of MPI processes
 and OpenMP threads.
 
- 
+% usepackage[T2]{fontenc}
+\begin{table}[ht]
+\centering
+\caption{amask Options for amask Executables}
+\label{tab:amaskopts}
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+%\toprule
+Purpose                  & option & args & long option  & long args  \\ \hline
+%\midrule
+Separate lines for SMTs  & -l     & s    & --listby     & smt        \\ \hline
+Print speed              & -p     & f|s  & --printspeed & fast|slow  \\ \hline
+Wait secs (process load) & -w     & \#   & --waitsecs   & \#         \\ \hline
+help                     & -h     &      & --help       &            \\ \hline
+%\bottomrule
+\end{tabular}
+\end{table}
 
-\section{Get Masks Inside a Program}
+%\FloatBarrier
 
-To report the masking from inside a program, include the amask API routine, \verb+omp_report_mask()+,
-\verb+mpi_report_mask()+, or \verb+hybrid_report_mask()+, within an OpenMP parallel region, after MPI has been
-initialized, or within an OpenMP region of a hybrid program, respectively.  These functions don't
-require any arguments or include files:  
+\chapter{Using the amask Library}
+
+
+\section{How to Print amask Reports Inside an Application}
+
+To report the masks from inside a program, include the amask API routine, \verb+amask_omp()+,
+\verb+amask_mpi()+, or \verb+amask_hybrid()+, within an OpenMP parallel region, after MPI has been
+initialized, or within an OpenMP region of a hybrid program, respectively.  These functions can
+be called from C, C++, and Fortran; and don't require any arguments or include files:  
 
 \begin{itemize}
-\item omp\_report\_mask()
-\item mpi\_report\_mask()
-\item hybrid\_report\_mask()
+\item amask\_omp()
+\item amask\_mpi()
+\item amask\_hybrid()
 \end{itemize}
 
 
@@ -452,25 +509,23 @@ it is to include them in your own program. The snippets below show how they are 
  // Pure OpenMP code
     #pragma omp parallel
     {
-       omp_report_mask();
+       amask_omp();
      ...
     }
 
  // Pure MPI code
     MPI_Init(NULL,NULL);
 
-       mpi_report_mask();
+       amask_mpi();
     ...
     MPI_Finalize();
 
  // Hybrid code
     MPI_Init_thread(NULL,NULL, MPI_THREAD_MULTIPLE, &provided);
 
-    mpi_report_mask();  // helpful: reports ONLY MPI process masks
-
    #pragma omp parallel
    {
-      hybrid_report_mask();
+      amask_hybrid();
       ...
    }
    ...
@@ -489,7 +544,7 @@ it is to include them in your own program. The snippets below show how they are 
 A thread or process that calls \verb+load_cpu_nsec(int nsec)+ will execute integer
 operations (a load) for nsec seconds.  nsec must be zero or a positive integer.  Use the
 \verb+cmdln_get_nsec_or_help(int * nsec, int argc, char * argv[])+ function to extract an
-integer from the command line for nsec (e.g. \verb+mpi_affinity+ 10).
+integer from the command line for nsec (e.g. \verb+mpi+ \verb+amask_mpi+ 10).
 
 
 A thread or process that calls \verb+map_to_procid(int proc-id)+ will assign the
@@ -507,8 +562,8 @@ more details.
 The function \verb+tsc()+ returns an 8-byte integer (Unix) time stamp count from
 the \verb+rdtsc+ instruction. Use this to capture the difference between the counts for
 determining 
-the cost a of a small set of operations (instructions, code statements). This is
-not meant to be used as a general timer, since the processor frequency may change.
+the cost of a small set of operations (instructions, code statements). This is
+not meant to be used as a general timer when the processor frequency may change.
 
 
 

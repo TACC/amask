@@ -24,6 +24,11 @@ char node_header[MAX_NAME];
 int cores, cnt, wrap_cont = 0;
 char no_occ;
 int ii, force_long = 0;   // pass this in later
+                               // space arrays
+char   space_1[] =" ";
+char   space_5[] ="     ";
+char   space_10[]="          ";
+char * spaces;
 
 //                              prints mask acquired for particular rank and thread
 //                              ncpus = number of cpu_id's on a node
@@ -65,21 +70,38 @@ int ii, force_long = 0;   // pass this in later
 // Do this the easy way!
 //                              HEADER (ranks and threads part)
 //                              First part of Header, rank/thrd title
+//
+    if(nranks == 1 &&  nthrds == 1 ){ spaces=space_1; }         // serial
+    if(nranks != 1 &&  nthrds == 1 ){ spaces=space_5; }         // mpi only
+    if(nranks == 1 &&  nthrds != 1 ){ spaces=space_5;}         // threads only
+    if(nranks != 1 &&  nthrds != 1 ){ spaces=space_10;}         // hybrid
 
-    
-    if(hd_prnt == 1)                 printf("\n      Each row of matrix is an Affinity "
-                                                    "mask. A set mask bit = matrix digit "
-                                                    "+ column # in |...|\n");
-    if(multi_node){                  printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
+    if( l == 's') {
+       if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
+                                     printf("\n%sEach row of matrix is an affinity mask.\n",spaces);
+                                     printf("%sA set mask bit = matrix digit + column group # in |...|\n\n",spaces);
+                       }
+    }
+    else{
+       if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
+                                     printf("\n%sEach row of matrix is a mask for a Hardware Thread (hwt).\n",spaces);
+                                     printf("%sCORE ID  = matrix digit + column group # in |...|\n",spaces);
+                                     printf("%sA set mask bit (proc-id) = core id + add %d to each additional row.\n\n",spaces, cores);
+                       }
+ 
+    }
 
-    if(nranks == 1 &&  nthrds == 1 ){ printf(" ");          wrap_cont += 1; }         // serial
-    if(nranks != 1 &&  nthrds == 1 ){ printf("rank ");      wrap_cont += 5; }         // mpi only
-    if(nranks == 1 &&  nthrds != 1 ){ printf("thrd ");      wrap_cont += 5; }         // threads only
-    if(nranks != 1 &&  nthrds != 1 ){ printf("rank thrd "); wrap_cont += 10;}         // hybrid
+    if(multi_node){               printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
+
+    if(nranks == 1 &&  nthrds == 1 ){ printf(" ");          wrap_cont += 1;  spaces=space_1; }         // serial
+    if(nranks != 1 &&  nthrds == 1 ){ printf("rank ");      wrap_cont += 5;  spaces=space_5; }         // mpi only
+    if(nranks == 1 &&  nthrds != 1 ){ printf("thrd ");      wrap_cont += 5;  spaces=space_5;}         // threads only
+    if(nranks != 1 &&  nthrds != 1 ){ printf("rank thrd "); wrap_cont += 10; spaces=space_5;}         // hybrid
+
 
 //                              HEADER (Groups of 10's)
 //                              Print out Header
-                                printf("|         |");                                
+                                printf("|    0    |");                                
      cnt = ( tpc > 1 && ! force_long )? cores : ncpus;
      if(cnt < 100){
 //                                                          # of header groups < 100 

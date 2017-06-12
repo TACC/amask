@@ -2,13 +2,13 @@
 The Fortran API is not ready yet.
 
 
-Maskeraid was originally designed just to display the affinity (mask) of processes that
+Amask was originally designed just to display the affinity (mask) of processes that
 are launched by an MPI executable launcher (mpirun, mpiexec, TACC ibrun, etc.).
-When maskeraid is built, it creates mpi_affinity. This MPI executable 
+When maskeraid is built, it creates amask_mpi. This MPI executable 
 is then substituted for mpi application executable of the researcher in a test run
 to discover how the launcher would have distributed the application's tasks (ranks).
 In a job script, the user would simple replace the application executable name
-with mpi_affinity (you may need to include a path the executable location), as
+with amask_mpi (you may need to include a path the executable location), as
 shown below:
 
            #!/bin/bash
@@ -17,12 +17,12 @@ shown below:
            #Batch Script for TACC machine
            ...
            #ibrun ./my_mpi_exec
-            ibrun ./mpi_affinity
+            ibrun ./amask_mpi
 
 
 
 OUTPUT 1
-rank |         |   10    |
+rank |    0    |   10    |
 0000 0---------------
 0001 -1--------------
 0002 --2-------------
@@ -48,7 +48,7 @@ reset the load time by setting setting the MASKERAID_LOAD_SECONDS environment
 variable to a positive integer (units are seconds).
 
 The resulting output for Stampede in Output 1. shows a matrix with rows labeled by the ranks
-of a mpi_affinity MPI tasks for the above launch, the columns represent CPU_ids 
+of a amask_mpi MPI tasks for the above launch, the columns represent CPU_ids 
 (core id) with positions representing the the CPU_ids from 0 to ntasks-1, beginning 
 with the first column of the matrix.  
 
@@ -88,7 +88,7 @@ With the MVAPICH2 compiler, this is done the in the tacc_affinity scripts.
 
 Instrumenting Your Own Application.  FORTRAN IS NOT READY YET
 
-Important elements of Maskeraid were turned into an library, so that users
+Important elements of Amask were turned into an library, so that users
 could instrument there own applications to display the masks of MPI tasks
 and OpenMP threads.  Instrumentation is simple, just add a single call to
 an MPI or OpenMP code after initialization or the parallel directive, respectively.
@@ -98,21 +98,21 @@ in the hybrid region (with an OpenMP parallel region).  Simple cases are shown b
 MPI code:
 
           MPI_Init(NULL,NULL);                call MPI_Init()
-          ierr = mpi_report_mask();           ierr = mpi_report_mask() 
+          ierr = amask_mpi();                 ierr = amask_mpi() 
           ...                                 ...
 
 OMP code: 
           #pragma omp parallel private(ierr)  !$omp parallel private(ierr)
-          ierr = omp_report_mask();           ierr = omp_report_mask() 
+          ierr = amask_omp();                 ierr = amask_omp() 
           ...                                 ...
 
 HYBrid code: 
 
           MPI_Init_thread(...);               call MPI_Init_thread()
-          ierr = mpi_report_mask();           ierr = mpi_report_mask() 
+          ierr = amask_mpi();                 ierr = amask_mpi() 
           ...                                 ...
           #pragma omp parallel private(ierr)  !$omp parallel private(ierr)
-          ierr = hybrid_report_mask();        ierr = hybrid_report_mask() 
+          ierr = amask_hybrid();              ierr = amask_hybrid() 
           ...                                 ...
 
 There are other utilities in the library:
