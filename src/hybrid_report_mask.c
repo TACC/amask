@@ -122,7 +122,7 @@ int  tpc;   // hwthreads/core
                  all_names, max_name_len+1, MPI_CHAR,
                  0, MPI_COMM_WORLD);
   
-                                  // If multiple nodes, make muti_node non-zero.
+                                  // If multiple nodes, make multi_node non-zero.
      if(rank == 0){
        for(id=0;id<nranks;id++){
          if( strcmp(&all_names[id*(max_name_len+1)],&all_names[0]) ) multi_node++; }
@@ -155,7 +155,8 @@ int  tpc;   // hwthreads/core
        fflush(stdout);
 
        for(tid=0;tid<nthrds;tid++){
-          print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,l);
+        //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,l);
+          print_mask(0,  &all_names[ 0                  ], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,l);
        }
        fflush(stdout);
          
@@ -167,7 +168,8 @@ int  tpc;   // hwthreads/core
 
        for(rid=1;rid<nranks;rid++){ // Print for each rank
             for(tid=0;tid<nthrds;tid++){
-               print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,l);
+             //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,l);
+               print_mask(0,  &all_names[rid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,l);
                if(p == 's') ierr=usleep(300000);
             }
        }

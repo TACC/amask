@@ -91,6 +91,7 @@ char * spaces;
  
     }
 
+  //if(multi_node){               printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
     if(multi_node){               printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
 
     if(nranks == 1 &&  nthrds == 1 ){ printf(" ");          wrap_cont += 1;  spaces=space_1; }         // serial
@@ -119,7 +120,7 @@ char * spaces;
   else {
 //                              
 //                              Print out rank/thrd value
-    if(multi_node){                  printf(" %20.20s  ", name);          wrap_cont += 20;} // Multi-node
+    if(multi_node){                  printf(" %20.20s  ", name);          wrap_cont += 23;} // Multi-node
     if(nranks == 1 &&  nthrds == 1 ){ printf(" "          );              wrap_cont += 1; }
     if(nranks != 1 &&  nthrds == 1 ){ printf("%4.4d ",rank);              wrap_cont += 5; }
     if(nranks == 1 &&  nthrds != 1 ){ printf("%4.4d ",thrd);              wrap_cont += 5; }
