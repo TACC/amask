@@ -17,3 +17,4 @@ doc/*.out
 doc/*.log
 doc/*.aux
 doc/*.toc
+doc/amask_ug.pdf
