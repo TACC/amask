@@ -12,4 +12,8 @@ src/junk
 src/backup
 src/test
 *.[0-9]
-
+doc/*.[0-9]
+doc/*.out
+doc/*.log
+doc/*.aux
+doc/*.toc
