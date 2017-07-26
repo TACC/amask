@@ -16,7 +16,7 @@
 
 int get_threads_per_node();   
 
-void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char l){ 
+void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char v){ 
 
 int i, lsdigit, n10, n100;
 char node_header[MAX_NAME];
@@ -47,7 +47,7 @@ char * spaces;
 
 //    See FORTRAN INTERFACE at end
 
-  if( l != 's') {
+  if( v != 'k') {
       cores=ncpus/tpc;
   }
   else{
@@ -76,17 +76,17 @@ char * spaces;
     if(nranks == 1 &&  nthrds != 1 ){ spaces=space_5;}         // threads only
     if(nranks != 1 &&  nthrds != 1 ){ spaces=space_10;}         // hybrid
 
-    if( l == 's') {
+    if( v == 'k') {
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
                                      printf("\n%sEach row of matrix is an affinity mask.\n",spaces);
-                                     printf("%sA set mask bit = matrix digit + column group # in |...|\n\n",spaces);
+                                     printf("%sThe proc-id of a set mask bit = matrix digit + column group # in |...|\n\n",spaces);
                        }
     }
     else{
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
-                                     printf("\n%sEach row of matrix is a mask for a Hardware Thread (hwt).\n",spaces);
-                                     printf("%sCORE ID  = matrix digit + column group # in |...|\n",spaces);
-                                     printf("%sA set mask bit (proc-id) = core id + add %d to each additional row.\n\n",spaces, cores);
+                                     printf("\n%sEach row of matrix is a mask for a SMT thread.\n",spaces);
+                                     printf("%score-id of a set bit = matrix digit + column group # in |...|\n",spaces);
+                                     printf("%sproc-id = core id + add %d to each additional row.\n\n",spaces, cores);
                        }
  
     }
@@ -131,7 +131,7 @@ char * spaces;
 //                      Mask index == head group + least significant digit (sdigit)
 
     no_occ = ( tpc > 1 && ! force_long )? '=' : '-';
-    if( l == 's') no_occ = '-';
+    if( v == 'k') no_occ = '-';
     for(i=0;i<ncpus;i++){ 
      ii = i%cores;
 

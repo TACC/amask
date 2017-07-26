@@ -286,7 +286,7 @@ proc-id assignments.
 \caption{Hardware information from lstopo\label{fig:lstopo1}}
 \end{figure}
 
-Listing \ref{fig:amaskdefaultmpienv} shows  MPI processes executing on processors (cores) 0-7. 
+Listing \ref{amaskdefaultmpienv} shows  MPI processes executing on processors (cores) 0-7. 
 The rows of the matrix are labeled by the MPI ranks and the columns represent the
 machine's processor-ids (\verb+Core P#+ in Figure \ref{fig:lstopo1}) from 0 to Nprocs-1.
 % where Nprocs is the number \verb+PUs+ from \verb+lstopo+ or the number of processors reported 
@@ -367,7 +367,7 @@ has 4,200 PHI 7250 processors (KNLs), each with 272 hardware threads (68 cores x
 4 SMT threads/core).  Before version 1.0  amask would display rows of 272 proc-ids 
 (processor ids=hardware threads), but that became a bit unwieldy for users to 
 display on laptops.  Now, by default, a matrix of core-ids versus process-ids is displayed.
-If there are n SMTs/core, there will be n rows for each process (rank/thread-id) listed (on the left).
+If there are n SMT-threads/core, there will be n rows for each process (rank/thread-id) listed (on the left).
 For the KNL described above there will be 4 rows displayed for each process 
 (corresponding to  proc-id {0-67}, {68-135}, {136-203}, and {204-272}) with the header displaying core-ids.  
 This is shown in Listing \ref{amasktaccknl}.
@@ -382,7 +382,7 @@ $ ./amask_omp
 
      Each row of matrix is a mask for a Hardware Thread (hwt).
      CORE ID  = matrix digit + column group # in |...|
-     A set mask bit (proc-id) = core id + add 68 to each additional row.
+     A set mask bit (proc-id) = core-id + add 68 to each additional row.
 
 thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
 0000 0===================================================================
@@ -420,14 +420,15 @@ thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
 
 \end{smallercode}
 
-This display is basically core occupation -- something users found they would rather see than 272-character masks.
-For each process the digits of all hardware-thread rows combine with the  group number in the header to give the
-core id. For a process, the sequence of rows corresponds to hardware-thread ids, 0-(n-1), where n is the number of hardware 
-threads for each core. To obtain the proc-id for a particular row entry, add a multiple of the number of cores (68 in this case)
-to the core id, where the multiplier is the hw-thread id number (0,1,2,3) for the core.  E.g. In Listing \ref{amasktaccknl} the proc-id for rank 6 is 1 (the core id)
-plus 2x68 (hardware-thread id 2 x number of cores). 
-When you need to work directly with the mask to determine the proc-ids, it is much easier 
-to use the mask display by using the \verb+-ls+ option on the command line. 
+This listing shows core occupation in each column -- something users found they would rather see than the 272-character kernel masks (of proc-ids vs. process).
+For a process, the sequence of rows corresponds to SMT thread-ids, 0-(n-1), where n is the number of SMT threads for each core. 
+The first row of a process uses the ``='' symbol, instead of the ``-'' symbol, to indicate a new process.
+A digit in any SMT row can be combined with the group number in the header to obtain the core-id. 
+To obtain the proc-id for a particular row entry, add a multiple of the number of cores (68 in this case)
+to the core-id, where the multiplier is the SMT thread-id number (0,1,2,3 in this case) for the core.  
+E.g. In Listing \ref{amasktaccknl} the proc-id for the set bit of rank 6 is 1 (the core-id) plus 2x68 (SMT thread-id 2 x number of cores). 
+When you need to work directly with the kernel mask (e.g. to easily determine the proc-ids), 
+force the kernel view of the mask with the \verb+-vk+ option on the command line (e.g. \verb+amask_omp -vk+). 
 
 %The proc-id numbers for the 2nd, 3rd and 4th row can be obtained in the usual
 %manner, but 68, 136, and 204 must be added to the respective row (68, the number of cores, for each additional row).  
@@ -449,9 +450,12 @@ the number of seconds (integer) as an argument to the option.
 By default there is a delay between printing each map. The delay can be eliminated by specifying
 the fast argument for the printing option, \verb+-pf+.
 
-When SMT is detected the listing defaults to a core versus process listing (with a
-separate line for each hardware thread in the core).  
-Add the header group number to the digit in each row to obtain the core-id.
+When SMT is detected the listing defaults to a core versus process view (with a
+separate line for each SMT thread in the core).  
+In this case, adding the header group number to the digit in each row gives the core-id.
+Specify \verb+-vk+ option (kernel view) to obtain the normal Linux ``kernel'' view of
+proc-id versus process.
+
 
 As described above, an argument of \verb+s+ with the listing \verb+-l+ option forces the 
 matrix listings to be Simultaneous Multi-Threads versus
@@ -472,12 +476,12 @@ and OpenMP threads.
 \begin{tabular}{|l|l|l|l|l|}
 \hline
 %\toprule
-Purpose                  & option & args & long option  & long args  \\ \hline
+Purpose                  & option & args & long option  & long args   \\ \hline
 %\midrule
-Separate lines for SMTs  & -l     & s    & --listby     & smt        \\ \hline
-Print speed              & -p     & f|s  & --printspeed & fast|slow  \\ \hline
-Wait secs (process load) & -w     & \#   & --waitsecs   & \#         \\ \hline
-help                     & -h     &      & --help       &            \\ \hline
+View                     & -v     & k    & --view       & kernel      \\ \hline
+Print speed              & -p     & f|s  & --printspeed & fast|slow   \\ \hline
+Wait secs (process load) & -w     & \#   & --waitsecs   & \#          \\ \hline
+help                     & -h     &      & --help       &             \\ \hline
 %\bottomrule
 \end{tabular}
 \end{table}

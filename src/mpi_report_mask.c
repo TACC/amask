@@ -33,7 +33,7 @@
 #include "opts.h"
 
                                   // basic routes
-void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char l);
+void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char v);
 int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
@@ -57,13 +57,13 @@ int ** proc_mask;
 int  * all_masks;
 
                           // Options
-char l,p;
+char v,p;
 int  tpc;      //hwthreads/core
 
    Maskopts opts;
                           // get print_speed fast or slow (f|c);   listing cores or SMT (c|s)
    p = opts.get_p();
-   l = opts.get_l();
+   v = opts.get_v();
 
    tpc=get_threads_per_node();
 
@@ -116,13 +116,13 @@ int  tpc;      //hwthreads/core
 
                                 // Master prints information
    if(rank == 0){
-         print_mask(1,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,l);  //print header
+         print_mask(1,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,v);  //print header
       for(id=0;id<nranks;id++){
-         print_mask(0, &all_names[id*(max_name_len+1)], multi_node, id,0, ncpus, nranks,1, &all_masks[id*ncpus],tpc,l);
+         print_mask(0, &all_names[id*(max_name_len+1)], multi_node, id,0, ncpus, nranks,1, &all_masks[id*ncpus],tpc,v);
          if(p == 's') ierr=usleep(1000000);
       }
       if(nranks>25)
-         print_mask(2,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,l);  //print header
+         print_mask(2,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,v);  //print header
    }
 
                                // Free space

@@ -2,7 +2,7 @@
 
 // static var defaults must be set outside class (until C++11)
 int  Maskopts::w=0;
-char Maskopts::l='c', Maskopts::p='s', Maskopts::u='-';
+char Maskopts::v='c', Maskopts::p='s', Maskopts::u='-';
 bool Maskopts::setbycmdline=false;
 
 
@@ -23,7 +23,7 @@ Maskopts::Maskopts(int myargc, char** myargv){
 int Maskopts::my_cmdln_opts(){
 
 //char  long_opt argument:
-// w wait-time <int>; l list-by smt|cores;  p print-speed fast|slow; u usage no_arg
+// w wait-time <int>; v view kernel|core;  p print-speed fast|slow; u usage no_arg
 // http://stackoverflow.com/questions/7489093/getopt-long-proper-way-to-use-it
 
 char c, c_arg; int long_index=0;
@@ -31,24 +31,24 @@ char c, c_arg; int long_index=0;
 // Options
 static struct option long_opts[] = {
                                      {"waitsecs",   required_argument, 0,  'w' },
-                                     {"listby",     required_argument, 0,  'l' },
+                                     {"view",       required_argument, 0,  'v' },
                                      {"printspeed", required_argument, 0,  'p' },
                                      {"usage",      no_argument,       0,  'u' },
                                      {0,            0,                 0,   0  }
                                    };
 
    argcnt = 0;
-   while ((c = getopt_long(argc, argv, "w:l:p:u", long_opts, &long_index)) != -1) {
+   while ((c = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
 
       switch (c) {
         case 'w':
                 w=atoi(optarg);
                 argcnt++;  
                 break;  
-        case 'l':
+        case 'v':
                 c_arg=optarg[0];
-                if(c_arg != 'c' && c_arg != 's'){ print_usage_cmdln('l'); }
-                if(c_arg == 'c' || c_arg == 's'){ l=c_arg; }
+                if(c_arg != 'c' && c_arg != 'k'){ print_usage_cmdln('v'); }
+                if(c_arg == 'c' || c_arg == 'k'){ v=c_arg; }
                 argcnt++;  
                 break;  
         case 'p':
@@ -91,8 +91,8 @@ string env_vars[] = { "CMASK_WAITSECS",   "CMASK_LISTBY",
    env_p = std::getenv( env_vars[1].c_str() );
    if ( env_p != 0 )            { c = env_p[0];    argcnt++;
 
-      if( c != 'c' && c != 's') { print_usage_env("CMASK_LISTBY");  }
-      if( c == 'c' || c == 's') { l=c; }
+      if( c != 'c' && c != 'k') { print_usage_env("CMASK_VIEW");  }
+      if( c == 'c' || c == 'k') { v=c; }
 
    }
 
@@ -111,11 +111,12 @@ string env_vars[] = { "CMASK_WAITSECS",   "CMASK_LISTBY",
 }
 
 void Maskopts::print_usage_cmdln(char c_err) {
-   printf("Usage: mpi|omp|hybrid|serial|_mask [-w|-waitsecs #] [-l|-listby s|c] [-p|-printspeed f|s] [-u|-usage]\n"); 
+   printf("NOTICE: -ls and -lc options are now -vk and -vc, respectively. (Kernel and Core Views)\n"); 
+   printf("Usage: amask_mpi|omp|hybrid|serial [-w|-waitsecs #] [-v|-view k|c] [-p|-printspeed f|s] [-u|-usage]\n"); 
    if(c_err!='u') printf("       Problem with %c option.\n", c_err ); 
 } 
 
 void Maskopts::print_usage_env(char *c_err) {
-   printf("Usage: CMASK_WAITSECS=<int>(sec) CMASK_LISTBY=cores|smt CMASK_PRINTSPEED=fast|slow CMASK_USAGE=u \n"); 
+   printf("Usage: CMASK_WAITSECS=<int>(sec) CMASK_VIEW=kernel|core CMASK_PRINTSPEED=fast|slow CMASK_USAGE=u \n"); 
    if(c_err != NULL) printf("       Problem with %s option.\n", c_err ); 
 } 

@@ -43,7 +43,7 @@
 #include "opts.h"
 
                                 // basic mask printer-- prints a single row with ncpus number of elements
-void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char l);
+void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char v);
 int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
@@ -73,13 +73,13 @@ static int   max_name_len;
      int   name_len;
      char  proc_name[MPI_MAX_PROCESSOR_NAME];
 
-char l,p;
+char v,p;
 int  tpc;   // hwthreads/core
 
    Maskopts opts;
                           // get print_speed fast or slow (f|c);   listing cores or SMT (c|s)
    p = opts.get_p();
-   l = opts.get_l();
+   v = opts.get_v();
 
    tpc=get_threads_per_node();
                                          // In MPI and parallel region ?
@@ -151,12 +151,12 @@ int  tpc;   // hwthreads/core
        request = (MPI_Request *) malloc(sizeof(MPI_Request)*nranks);
        status  = (MPI_Status  *) malloc(sizeof(MPI_Status )*nranks);
 
-       print_mask(1,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,l);  //print header 
+       print_mask(1,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,v);  //print header 
        fflush(stdout);
 
        for(tid=0;tid<nthrds;tid++){
-        //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,l);
-          print_mask(0,  &all_names[ 0                  ], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,l);
+        //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,v);
+          print_mask(0,  &all_names[ 0                  ], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,v);
        }
        fflush(stdout);
          
@@ -168,14 +168,14 @@ int  tpc;   // hwthreads/core
 
        for(rid=1;rid<nranks;rid++){ // Print for each rank
             for(tid=0;tid<nthrds;tid++){
-             //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,l);
-               print_mask(0,  &all_names[rid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,l);
+             //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,v);
+               print_mask(0,  &all_names[rid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,v);
                if(p == 's') ierr=usleep(300000);
             }
        }
 
        if(nranks*nthrds > 50)
-          print_mask(2,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,l);  //print header 
+          print_mask(2,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,v);  //print header 
 
        fflush(stdout);
 
