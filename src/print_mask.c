@@ -46,11 +46,13 @@ char * spaces;
 //    If nthrds = 1, thread number is not printed.
 
 //    See FORTRAN INTERFACE at end
-
-  if( v != 'k') {
+//
+  if( tpc != 1 && v != 'k') {
+      v='c';
       cores=ncpus/tpc;
   }
   else{
+      v='k';
       tpc=1;
       cores=ncpus;  // effectively make hw_threads/core = 1
   }

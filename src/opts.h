@@ -38,8 +38,8 @@ class Maskopts{
 
     bool is_set_by_cmdline(){return this->setbycmdline;}
 
-    void print_usage_cmdln(char  c_err) ;
-    void print_usage_env(  char *c_err) ;
+    void print_usage_cmdln(      char  c_err) ;
+    void print_usage_env(  const char *c_err) ;
 
     int my_cmdln_opts();
     int my_env_opts();

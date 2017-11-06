@@ -1,5 +1,5 @@
 #
-# Intel Compilers and MPI
+# Intel Compilers (IMPI or MVAPICH2)
 CC_SER  =   icpc -g
 CC_MPI  = mpicxx -g
 CC_OMP  =   icpc -qopenmp -g
@@ -7,6 +7,9 @@ CC_HYB  = mpicxx -qopenmp -g
 LD_MPI  = mpicxx -g
 LD_OMP  =   icpc -qopenmp -g
 LD_HYB  = mpicxx -qopenmp -g
+
+#CHPC South Africa:  Intel Compiler (OpenMPI)
+#CHPC_HOST =lengau
 
 AR      = ar
 
@@ -35,6 +38,17 @@ ifeq ($(NERSC_HOST),cori)
    LD_OMP  = CC -qopenmp -g
    LD_HYB  = CC -qopenmp -g
 endif
+
+ifeq ($(CHPC_HOST),lengau)
+CC_SER  =    c++ -g
+CC_MPI  = mpicxx -g
+CC_OMP  =    c++ -fopenmp -g
+CC_HYB  = mpicxx -fopenmp -g
+LD_MPI  = mpicxx -g
+LD_OMP  =    c++ -fopenmp -g
+LD_HYB  = mpicxx -fopenmp -g
+endif
+
 
 #rm -fr $(EXES) $(DRIVER_OBJECTS) $(LIB_OBJECTS) $(LIB) *.mod
 

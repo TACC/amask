@@ -38,9 +38,11 @@ static struct option long_opts[] = {
                                    };
 
    argcnt = 0;
+   v='0';//w='0';p='0';u='0';
    while ((c = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
-
+ 
       switch (c) {
+ 
         case 'w':
                 w=atoi(optarg);
                 argcnt++;  
@@ -116,7 +118,7 @@ void Maskopts::print_usage_cmdln(char c_err) {
    if(c_err!='u') printf("       Problem with %c option.\n", c_err ); 
 } 
 
-void Maskopts::print_usage_env(char *c_err) {
+void Maskopts::print_usage_env(const char *c_err) {
    printf("Usage: CMASK_WAITSECS=<int>(sec) CMASK_VIEW=kernel|core CMASK_PRINTSPEED=fast|slow CMASK_USAGE=u \n"); 
    if(c_err != NULL) printf("       Problem with %s option.\n", c_err ); 
 } 
