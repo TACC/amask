@@ -10,13 +10,20 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
+#include <unistd.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+
 #define MAX_NAME 4096
                       //!!! If you change NODE_SIZE from 20, change %20s in 2 multi-node format statements.
 #define NODE_SIZE  20
 
 int get_threads_per_node();   
+int TpC_from_lscpu_tmpfile(void);
+int TpC_from_lscpu_popen(void);
 
-void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char v){ 
+void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char l){ 
 
 int i, lsdigit, n10, n100;
 char node_header[MAX_NAME];
@@ -46,13 +53,11 @@ char * spaces;
 //    If nthrds = 1, thread number is not printed.
 
 //    See FORTRAN INTERFACE at end
-//
-  if( tpc != 1 && v != 'k') {
-      v='c';
+
+  if( l != 's') {
       cores=ncpus/tpc;
   }
   else{
-      v='k';
       tpc=1;
       cores=ncpus;  // effectively make hw_threads/core = 1
   }
@@ -78,17 +83,17 @@ char * spaces;
     if(nranks == 1 &&  nthrds != 1 ){ spaces=space_5;}         // threads only
     if(nranks != 1 &&  nthrds != 1 ){ spaces=space_10;}         // hybrid
 
-    if( v == 'k') {
+    if( l == 's') {
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
                                      printf("\n%sEach row of matrix is an affinity mask.\n",spaces);
-                                     printf("%sThe proc-id of a set mask bit = matrix digit + column group # in |...|\n\n",spaces);
+                                     printf("%sA set mask bit = matrix digit + column group # in |...|\n\n",spaces);
                        }
     }
     else{
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
-                                     printf("\n%sEach row of matrix is a mask for a SMT thread.\n",spaces);
-                                     printf("%score-id of a set bit = matrix digit + column group # in |...|\n",spaces);
-                                     printf("%sproc-id = core id + add %d to each additional row.\n\n",spaces, cores);
+                                     printf("\n%sEach row of matrix is a mask for a Hardware Thread (hwt).\n",spaces);
+                                     printf("%sCORE ID  = matrix digit + column group # in |...|\n",spaces);
+                                     printf("%sA set mask bit (proc-id) = core id + add %d to each additional row.\n\n",spaces, cores);
                        }
  
     }
@@ -133,7 +138,7 @@ char * spaces;
 //                      Mask index == head group + least significant digit (sdigit)
 
     no_occ = ( tpc > 1 && ! force_long )? '=' : '-';
-    if( v == 'k') no_occ = '-';
+    if( l == 's') no_occ = '-';
     for(i=0;i<ncpus;i++){ 
      ii = i%cores;
 
@@ -182,10 +187,12 @@ char * spaces;
 */
 
 int get_threads_per_node(){   
-   int ret_lscpu=0, tpc=1;
-   FILE* fp;
-   char c_tpc[5], *endptr;
-   long l_tpc;
+   int  TpC;
+   int ret_lscpu=0;
+
+   enum lscpu_method{popen,tmpfile}; 
+   enum lscpu_method method;
+   method = popen;
 
 /*
     Returns the number of threads per core from lscpu Unix Utility command.
@@ -201,31 +208,150 @@ int get_threads_per_node(){
                    nthreads = CPU_COUNT_S(setsize, thread_siblings);
                    if (!nthreads) nthreads = 1; // in lscpu code
 */
-   
+
+
+   method = popen;
+
+#if defined(__INTEL_COMPILER)
+#if __INTEL_COMPILER == 1800 && __INTEL_COMPILER_UPDATE == 2
+   method=tmpfile;
+#endif
+#endif
+
+#if defined(TpC_BY_POPEN)
+   method=popen;
+#endif
+
+#if defined(TpC_BY_TMPFILE)
+   method=tmpfile;
+#endif
+
+
               //Make sure lscpu is available.
    ret_lscpu = system("lscpu | grep -e 'Thread(s) per core:' | awk '{print $NF}' > /dev/null 2>&1"); 
 
+
               //Report  Threads per Core.
    if (ret_lscpu == 0) {
-              // Pickup # threads/core
-     fp = popen("lscpu | grep -e 'Thread(s) per core:' | awk '{print $NF}'", "r");
-     fgets(c_tpc, 5, fp);
-     l_tpc= strtol(c_tpc, &endptr, 10);
-     if ((errno == ERANGE && (l_tpc == LONG_MAX || l_tpc == LONG_MIN))
-          || (errno != 0 && l_tpc == 0) || endptr == c_tpc ) {
-       printf(" Warning get_threads_per_node (tpc) failed. Using 1 tpc.\n");
-       return 1;
+      if(method==popen  ){
 
-     } else{ return (int)l_tpc; }
+         TpC = TpC_from_lscpu_popen();
 
+         printf("*------------------------------------------------------------------------IS POPEN %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
+      }
+      if(method==tmpfile ){
+         TpC = TpC_from_lscpu_tmpfile();
+         printf("*------------------------------------------------------------------------IS TMPFILE %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
+      }
    }
-
-   else{ 
-
-     printf(" Warning could not execute lscpu to obtain threads per core. Using 1.\n");
+         printf("***************************** %d\n",TpC);
+   if(TpC==-1)
+   {
+     //printf(" WARNING: could not execute lscpu to obtain threads per core (TpC). Using 1.\n");
      return 1; 
-
    }
+   else { return TpC; }
    
 }
 
+int TpC_from_lscpu_tmpfile(void)
+{
+   // Temporary File and lscpu command variables:
+   char file_template[22]="/tmp/AMASKtemp-XXXXXX"; //directory + template file name
+   char cmd[ 128]        ="lscpu >";  //size to fit strlen(cmd)+strlen(file)+1
+   char tmp_file[32];                 //size to fit strlen(file_template)+1
+                                      // tmp_file hold lscpu report
+   int status;
+
+   FILE  *file;
+   char    lscpu_line[4096];
+   char    *cptr,*cptr_end;
+   long  ldigit;
+   int   TpC=-1;
+   int i=0,j=0, ierr;
+
+   // Create a temporary file (tmp_file)  with the output from lscpu:
+   // tmp_file = cmd + file_template(after random value added for XXXXXX)
+   // 
+   memset(tmp_file,0,sizeof(tmp_file));
+   strncpy(      tmp_file,file_template,strlen(file_template));
+
+
+   status = mkstemp(tmp_file);
+   if(status==-1)
+   {
+      printf("WARNING: mkstemp failed. OK, amask will default to kernel view.\n");
+      unlink(tmp_file);
+   }
+
+   if(status!=-1){
+      memcpy(cmd+strlen(cmd),tmp_file,strlen(tmp_file)+1);
+      status=system(cmd);
+      if(status==-1) printf("WARNING: lscpu failed. OK, amask will default to kernel view.\n");
+   }
+
+
+   if(status!=-1){
+      file = fopen(tmp_file, "r");
+      if (file == NULL)
+      {
+          ierr=errno;
+          printf("WARNING: fopen failed. OK, amask will default to kernel view.\n");
+          fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
+          printf("        file: %s  errno-string: %s\n",tmp_file,strerror(ierr));
+          return 1;
+      }
+   
+      while (EOF != fscanf(file, "%[^\n]\n", lscpu_line))
+      {
+       j++;
+          if( strstr(lscpu_line,"Thread(s) per core:") != NULL)
+          { 
+            cptr=lscpu_line;
+            cptr_end=lscpu_line;
+            while (*(cptr_end++)!='\0')
+            while( *cptr){
+              i++;
+              if(isdigit(*cptr)){
+                //printf(" DIGIT %c -- %s     ->%d %d\n",*cptr, lscpu_line,i,j); 
+                  ldigit = strtol(cptr, &cptr_end, 10); //printf("ldigit=%ld\n",ldigit);
+                  TpC= (int) ldigit;
+                  break;
+              } 
+            cptr++;
+            }
+          }
+      }
+      fclose(file);
+
+      // Remove temporary file (tmp_file)
+      unlink(tmp_file);
+
+   }
+
+    return TpC;
+}
+
+int TpC_from_lscpu_popen(void)
+{
+   FILE* fp;
+   char c_tpc[5], *endptr;
+   long l_tpc;
+   int  TpC, ierr;
+                // Pickup # threads/core
+      fp = popen("lscpu | grep -e 'Thread(s) per core:' | awk '{print $NF}'", "r");
+      fgets(c_tpc, 5, fp);
+      l_tpc= strtol(c_tpc, &endptr, 10);
+      ierr=errno;
+      if ((ierr == ERANGE && (l_tpc == LONG_MAX || l_tpc == LONG_MIN))
+           || (ierr != 0 && l_tpc == 0) || endptr == c_tpc ) {
+         printf("WARNING: popen method failed. OK, amask will default to kernel view.\n");
+         fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
+         printf("        errno-string:\n",strerror(ierr));
+         TpC=-1;
+      }
+      else
+      {  TpC= (int)l_tpc;  }
+
+      return TpC;
+}
