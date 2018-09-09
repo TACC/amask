@@ -347,7 +347,7 @@ int TpC_from_lscpu_popen(void)
            || (ierr != 0 && l_tpc == 0) || endptr == c_tpc ) {
          printf("WARNING: popen method failed. OK, amask will default to kernel view.\n");
          fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
-         printf("        errno-string:\n",strerror(ierr));
+         printf("        errno-string: %s\n",strerror(ierr));
          TpC=-1;
       }
       else
