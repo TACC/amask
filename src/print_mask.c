@@ -236,6 +236,7 @@ int get_threads_per_node(){
    if (ret_lscpu == 0) {
       if(method==popen  ){
          TpC = TpC_from_lscpu_popen();
+<<<<<<< HEAD
        //printf("*---------------------------------IS POPEN %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
       }
       if(method==tmpfile ){
@@ -245,6 +246,17 @@ int get_threads_per_node(){
    }
        //printf("***************************** %d\n",TpC);
 
+=======
+
+       //printf("*------------------------------------------------------------------------IS POPEN %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
+      }
+      if(method==tmpfile ){
+         TpC = TpC_from_lscpu_tmpfile();
+       //printf("*------------------------------------------------------------------------IS TMPFILE %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
+      }
+   }
+       //printf("***************************** %d\n",TpC);
+>>>>>>> 04d751baa8a3f33ec2f55d355b39271d25e79034
    if(TpC==-1)
    {
      //printf(" WARNING: could not execute lscpu to obtain threads per core (TpC). Using 1.\n");
