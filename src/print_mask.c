@@ -25,7 +25,7 @@ int TpC_from_lscpu_popen(void);
 
 void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char l){ 
 
-int i, lsdigit, n10, n100;
+int i, ierr, lsdigit, n10, n100;
 char node_header[MAX_NAME];
 
 int cores, cnt, wrap_cont = 0;
@@ -218,6 +218,9 @@ int get_threads_per_node(){
 #endif
 #endif
 
+
+
+
 #if defined(TpC_BY_POPEN)
    method=popen;
 #endif
@@ -226,24 +229,23 @@ int get_threads_per_node(){
    method=tmpfile;
 #endif
 
+                                       // popen is broken on KNL, use tmpfile method
+   if ( system("grep Phi /proc/cpuinfo  > /dev/null 2>&1") == 0 ) method=tmpfile;
+
 
               //Make sure lscpu is available.
    ret_lscpu = system("lscpu > /dev/null 2>&1"); 
-
 
               //Report  Threads per Core.
    TpC=-1;
    if (ret_lscpu == 0) {
       if(method==popen  ){
          TpC = TpC_from_lscpu_popen();
-         //printf("*-------IS POPEN %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
       }
       if(method==tmpfile ){
          TpC = TpC_from_lscpu_tmpfile();
-         //printf("*-------IS TMPFILE %d %d\n",__INTEL_COMPILER, __INTEL_COMPILER_UPDATE);
       }
    }
-         //printf("*-------TpC %d\n",TpC);
 
    if(TpC==-1)
    {
