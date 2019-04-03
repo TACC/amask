@@ -25,28 +25,31 @@ int get_threads_per_node();
 
 void amask_omp(){
 
-int nthrds, thrd;  //Thread info
+static int ncpus, nthrds;
+int        thrd;  //Thread info
 
-int ncpus, nel_set;
+int  nel_set;
 static int ** proc_mask;
 int i,j, ierr;
 char *  dummy;
 
-char v,p;
-int  tpc;   // hwthreads/core
+static char v,p;
+static int  tpc;   // hwthreads/core
 
    Maskopts opts;
-                          // get print_speed fast or slow (f|c);   listing cores or SMT (c|s)
-   p = opts.get_p();
-   v = opts.get_v();
-
-
-   tpc=get_threads_per_node();
 
    thrd   =  omp_get_thread_num();
-   nthrds =  omp_get_num_threads();
-   ncpus  =  (int) sysconf(_SC_NPROCESSORS_ONLN);
-   
+
+   #pragma omp single
+   {
+                          // get print_speed fast or slow (f|c);   listing cores or SMT (c|s)
+      p = opts.get_p();
+      v = opts.get_v();
+
+      tpc    =  get_threads_per_node();
+      nthrds =  omp_get_num_threads();
+      ncpus  =  (int) sysconf(_SC_NPROCESSORS_ONLN);
+   } 
 
    if(omp_get_num_procs() != ncpus){
      printf("ERROR: ncpus_by_omp=%d, ncpus_sched=%d\n",omp_get_num_procs(),ncpus);

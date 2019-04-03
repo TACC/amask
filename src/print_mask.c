@@ -212,11 +212,14 @@ int get_threads_per_node(){
 
    method = popen;
 
+//                              // popen within parallel is broken
+//                              // for intel 18 compiled code
 #if defined(__INTEL_COMPILER)
 #if __INTEL_COMPILER == 1800 && __INTEL_COMPILER_UPDATE == 2
    method=tmpfile;
 #endif
 #endif
+
 
 
 
@@ -230,7 +233,7 @@ int get_threads_per_node(){
 #endif
 
                                        // popen is broken on KNL, use tmpfile method
-   if ( system("grep Phi /proc/cpuinfo  > /dev/null 2>&1") == 0 ) method=tmpfile;
+   if ( system("grep 'Phi(TM)' /proc/cpuinfo  > /dev/null 2>&1") == 0 ) method=tmpfile;
 
 
               //Make sure lscpu is available.
