@@ -1,0 +1,7 @@
+Name: $NAME
+Version: $VER
+Category: Affinity/Tools
+Keywords: Tools, Affinity, Resources
+Description: Affinity Mask reporting for parallel processes
+URL: https://github.com/tacc/amask
+

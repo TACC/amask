@@ -54,7 +54,7 @@ char * spaces;
 
 //    See FORTRAN INTERFACE at end
 
-  if( l != 's') {
+  if( l != 'k') {
       cores=ncpus/tpc;
   }
   else{

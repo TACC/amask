@@ -1,0 +1,50 @@
+
+Execute amask_omp, amask_mpi, or amask_hybrid (found in the \$TACC_AMASK_BIN
+directory) in a parallel environment to display the masks that
+the processes will have (process = OMP thread or MPI task here). E.g.
+
+STAND-ALONE BINARIES
+
+      export OMP_NUM_THREADS=16
+      export OMP_PROC_BIN=close
+      amask_omp
+      ./my_omp_application
+
+      ibrun amask_mpi
+      ibrun ./my_mpi_application
+
+      export OMP_NUM_THREADS=4
+      export OMP_PROC_BIN=spread
+      ibrun amask_hybrid
+      ibrun ./my_hybrid_application
+
+Application code can be instrumented to report the masks within an application.
+The C/C++ functions are argumentless, and have the same names as the stand-alone
+executables.  Similarly, for the corresponding Fortran subroutines.  E.g.
+
+INSTRUMENTATION FUNCTIONS   ( compile with \$TACC_AMASK_LIB/amask.a)
+
+  ...
+  #pragma omp parallel     // Pure OpenMP code
+  amask_omp();
+  ...
+
+  ...
+  MPI_Init(NULL,NULL);    // Pure MPI code
+    amask_mpi();
+  ...
+  MPI_Finalize();
+
+
+  ...
+  MPI_Init(NULL,NULL);    // Hybrid code
+  ...
+     #pragma omp parallel
+     amask_hybrid();
+  ...
+  MPI_Finalize();
+  ...
+
+A full description of the options can be found in the pdf file located
+in \$TACC_AMASK_DOC.  The syntax and usage can be found by executing any
+one of the stand-alone executables with the -u (usage) and -h (help) options.
