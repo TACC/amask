@@ -10,6 +10,8 @@
         free  spaces
         return
 
+   Removed check: if(omp_get_num_procs() != ncpus){  on 2019-06-14
+
 */
 
 #include <stdio.h>
@@ -51,10 +53,15 @@ static int  tpc;   // hwthreads/core
       ncpus  =  (int) sysconf(_SC_NPROCESSORS_ONLN);
    } 
 
+//  Uh, omp_get_num_procs doesn't return processors on device as advertised.
+//  if numactl requests a subset of cpu-ids, it returns the count of bits set.
+//  So-- removing this "invalid" check. 6/14/2019 
+/*
    if(omp_get_num_procs() != ncpus){
      printf("ERROR: ncpus_by_omp=%d, ncpus_sched=%d\n",omp_get_num_procs(),ncpus);
      exit(1);
    }
+*/
 
    #pragma omp single
    {

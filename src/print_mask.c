@@ -4,6 +4,11 @@
      Now allows up to 999 for max cpu_id value (should hold for a few years)
                                                                     Kent Milfeld
                                                                     2016/07/13
+     Intel 18.0.2 and 19.x.x are not allowed to use popen.  
+     It is broken for 18.  19.x.x gives a warning about using
+     popen in parallel region-- but it is called from a single
+     region, and that should be OK.  GCC does not complain.         Kent Milfeld
+                                                                    2019-06-14
 */
 #include <stdio.h>
 #include <math.h>
@@ -216,6 +221,14 @@ int get_threads_per_node(){
 //                              // for intel 18 compiled code
 #if defined(__INTEL_COMPILER)
 #if __INTEL_COMPILER == 1800 && __INTEL_COMPILER_UPDATE == 2
+   method=tmpfile;
+#endif
+                               // Uh, They "fixed" it
+                               // I should be able to call
+                               // from a master/single region
+                               // without getting this runtime warning:
+//OMP: Warning #190: Forking a process while a parallel region is active is potentially unsafe.
+#if __INTEL_COMPILER == 1900
    method=tmpfile;
 #endif
 #endif
