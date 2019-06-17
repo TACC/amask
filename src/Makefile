@@ -2,11 +2,11 @@
 # Intel Compilers (IMPI or MVAPICH2)
 CC_SER  =   icpc -g
 CC_MPI  = mpicxx -g
-CC_OMP  =   icpc -qopenmp -g
-CC_HYB  = mpicxx -qopenmp -g
+CC_OMP  =   icpc -g -fopenmp
+CC_HYB  = mpicxx -g -fopenmp
 LD_MPI  = mpicxx -g
-LD_OMP  =   icpc -qopenmp -g
-LD_HYB  = mpicxx -qopenmp -g
+LD_OMP  =   icpc -g -fopenmp
+LD_HYB  = mpicxx -g -fopenmp
 
 #CHPC South Africa:  Intel Compiler (OpenMPI)
 #CHPC_HOST =lengau
@@ -31,12 +31,12 @@ ifeq ($(NERSC_HOST),cori)
 
    CC_SER  = CC -g
    CC_MPI  = CC -g
-   CC_OMP  = CC -qopenmp -g
-   CC_HYB  = CC -qopenmp -g
+   CC_OMP  = CC -fopenmp -g
+   CC_HYB  = CC -fopenmp -g
 
    LD_MPI  = CC -g
-   LD_OMP  = CC -qopenmp -g
-   LD_HYB  = CC -qopenmp -g
+   LD_OMP  = CC -fopenmp -g
+   LD_HYB  = CC -fopenmp -g
 endif
 
 ifeq ($(CHPC_HOST),lengau)
