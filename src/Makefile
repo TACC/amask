@@ -13,21 +13,21 @@ LD_HYB  = mpicxx -g -fopenmp
 
 AR      = ar
 
+ifeq ($(TACC_SYSTEM),frontera)
+   LOAD_X=-xhost
+endif
+
 ifeq ($(TACC_SYSTEM),stampede)
    LOAD_X=-xhost
-   LOAD_DEF=-DSP1
 endif
 ifeq ($(TACC_SYSTEM),stampedeknl)
    LOAD_X=-xMIC-AVX512
-   LOAD_DEF=-DSPKNL
 endif
 ifeq ($(TACC_SYSTEM),ls5)
    LOAD_X=-xhost
-   LOAD_DEF=-DLS5
 endif
 ifeq ($(NERSC_HOST),cori)
    LOAD_X=-xhost
-   LOAD_DEF=-DSPKNL
 
    CC_SER  = CC -g
    CC_MPI  = CC -g
@@ -110,7 +110,7 @@ hybrid_report_mask.o :  hybrid_report_mask.c
 
 
 load.o  : load.c
-	$(CC_SER) $(LOAD_X) -DCMASK_LOAD -O3 $(LOAD_DEF)  -c $< -o $@
+	$(CC_SER) $(LOAD_X) -DCMASK_LOAD -O3  -c $< -o $@
 
 boundto.o  : boundto.c
 	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
