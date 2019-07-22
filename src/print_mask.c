@@ -9,6 +9,8 @@
      popen in parallel region-- but it is called from a single
      region, and that should be OK.  GCC does not complain.         Kent Milfeld
                                                                     2019-06-14
+     Conditional compilation changed to include all 18 
+     compilers above update 1:   from __INTEL_COMPILER_UPDATE >= 2  2019-07-22
 */
 #include <stdio.h>
 #include <math.h>
@@ -220,7 +222,7 @@ int get_threads_per_node(){
 //                              // popen within parallel is broken
 //                              // for intel 18 compiled code
 #if defined(__INTEL_COMPILER)
-#if __INTEL_COMPILER == 1800 && __INTEL_COMPILER_UPDATE == 2
+#if __INTEL_COMPILER == 1800 && __INTEL_COMPILER_UPDATE >= 2
    method=tmpfile;
 #endif
                                // Uh, They "fixed" it
