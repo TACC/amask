@@ -10,12 +10,12 @@ STAND-ALONE BINARIES
       amask_omp
       ./my_omp_application
 
-      ibrun amask_mpi
+      ibrun amask_mpi                     # non-TACC sites may use mpirun
       ibrun ./my_mpi_application
 
       export OMP_NUM_THREADS=4
       export OMP_PROC_BIN=spread
-      ibrun amask_hybrid
+      ibrun amask_hybrid                  # non-TACC sites may use mpirun
       ibrun ./my_hybrid_application
 
 Application code can be instrumented to report the masks within an application.
