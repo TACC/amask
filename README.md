@@ -1,5 +1,4 @@
 
-[//]: # ( [![Documentation Status](https://readthedocs.org/projects/amask/badge/?version=latest)](https://amask.readthedocs.io/en/latest/) Will use once we do readthedocs for amask )
 # amask Documentation
 
 ## Developers and Maintainers
@@ -19,12 +18,6 @@ The amask executable can be run immediately before an application to obtain the 
 To access the amask source code, clone this repository:
 
     git clone https://github.com/tacc/amask
-
-[//]: # ( ## User Documentation Use these when the time comes )
-[//]: # ( [Webpages](https://amask.readthedocs.io/en/latest/ ) )
-[//]: # ( [PDF](https://media.readthedocs.org/pdf/amask/latest/mkmod.pdf) )
-[//]: # ( [Paper]( https://www.ixpug.org/documents/1499277876ISC17_IXPUG_wrkshp_AMASK_milfeld_19_4x3_e.pdf ) )
-
 
 ----------------------------------------------------------------------------
 
