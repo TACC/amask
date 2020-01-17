@@ -1,0 +1,9 @@
+2020 01 17
+  Cleaned up Makefile to accommodate any compiler/mpi
+  Modified all c code to be compiled with C++ compiler.
+  Makefile now only used C++ compiler
+
+  Included structure nodeinfo to contain node information:
+  ncpus, tasks per node (TpC), ..., and how procids are
+  layout on sockets and hardware threads.
+

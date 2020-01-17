@@ -41,14 +41,30 @@
 #include  <ctype.h>
 #include  <cstdlib>
 #include "opts.h"
+#include <errno.h>
+
+enum  proc_id_ordering { SocSeq_HWT1st, SocEO_Core1st, SocSeq_Core1st, Order_Error };
+
+struct nodeinfo{
+    enum proc_id_ordering proc_order;
+    int  nproc_ids;
+    int  nsockets;
+    int  ncores;
+    int  TpC;
+    int  CpS;
+    int  TpC_verified;   // nsockets/ncores/TpC verified
+    int  status;   // nsockets/ncores/TpC verified
+};
 
                                 // basic mask printer-- prints a single row with ncpus number of elements
-void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char v);
+void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, nodeinfo info, int *proc_mask,  char v);
 int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
-
+void get_node_info(nodeinfo &info);
 
 int amask_hybrid(){
+
+nodeinfo info;
 
                         // General
 int i,j,ierr;
@@ -81,7 +97,14 @@ int  tpc;   // hwthreads/core
    p = opts.get_p();
    v = opts.get_v();
 
-   tpc=get_threads_per_node();
+   get_node_info(info);
+   if(info.status == 0){
+       printf("ERROR: lscpu failed.\n");
+       fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
+     //ierr=errno;printf("%s\n",strerror(ierr));
+   }
+   tpc    = info.TpC;
+// tpc=get_threads_per_node();
                                          // In MPI and parallel region ?
    MPI_Initialized(&in_mpi);
    in_omp = omp_in_parallel();
@@ -151,12 +174,12 @@ int  tpc;   // hwthreads/core
        request = (MPI_Request *) malloc(sizeof(MPI_Request)*nranks);
        status  = (MPI_Status  *) malloc(sizeof(MPI_Status )*nranks);
 
-       print_mask(1,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,v);  //print header 
+       print_mask(1,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, info, omp_proc_mask[0],v);  //print header 
        fflush(stdout);
 
        for(tid=0;tid<nthrds;tid++){
-        //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,v);
-          print_mask(0,  &all_names[ 0                  ], multi_node,  0,tid,   ncpus, nranks,nthrds, omp_proc_mask[tid],tpc,v);
+        //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  0,tid,   ncpus, nranks,nthrds, info, omp_proc_mask[tid],v);
+          print_mask(0,  &all_names[ 0                  ], multi_node,  0,tid,   ncpus, nranks,nthrds, info, omp_proc_mask[tid],v);
        }
        fflush(stdout);
          
@@ -168,14 +191,14 @@ int  tpc;   // hwthreads/core
 
        for(rid=1;rid<nranks;rid++){ // Print for each rank
             for(tid=0;tid<nthrds;tid++){
-             //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,v);
-               print_mask(0,  &all_names[rid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],tpc,v);
+             //print_mask(0,  &all_names[tid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, info, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],v);
+               print_mask(0,  &all_names[rid*(max_name_len+1)], multi_node,  rid,tid,   ncpus, nranks,nthrds, info, &omp_mask_pac[rid*nthrds*ncpus + tid*ncpus],v);
                if(p == 's') ierr=usleep(300000);
             }
        }
 
        if(nranks*nthrds > 50)
-          print_mask(2,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, omp_proc_mask[0],tpc,v);  //print header 
+          print_mask(2,  dummy,  multi_node,     0, 0,   ncpus, nranks,nthrds, info, omp_proc_mask[0],v);  //print header 
 
        fflush(stdout);
 
@@ -206,6 +229,7 @@ int  tpc;   // hwthreads/core
 
    #pragma omp barrier            // JIC, what all threads leaving at the same time.
 
+   return 0;
 }
 
-void amask_hybrid_(){ (void) amask_hybrid(); }
+void amask_hybrid_(){ amask_hybrid(); return; }

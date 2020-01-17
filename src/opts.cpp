@@ -26,7 +26,9 @@ int Maskopts::my_cmdln_opts(){
 // w wait-time <int>; v view kernel|core;  p print-speed fast|slow; u usage no_arg
 // http://stackoverflow.com/questions/7489093/getopt-long-proper-way-to-use-it
 
-char c, c_arg; int long_index=0;
+//char c, c_arg; int long_index=0;
+char c_arg; int long_index=0;
+int c;
 
 // Options
 static struct option long_opts[] = {

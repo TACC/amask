@@ -22,6 +22,19 @@
 #include <ctype.h>
 #include <errno.h>
 
+enum  proc_id_ordering { SocSeq_HWT1st, SocEO_Core1st, SocSeq_Core1st, Order_Error };
+
+struct nodeinfo{
+    enum proc_id_ordering proc_order;
+    int  nproc_ids;
+    int  nsockets;
+    int  ncores;
+    int  TpC;
+    int  CpS;
+    int  TpC_verified;   // nsockets/ncores/TpC verified
+    int  status;   // nsockets/ncores/TpC verified
+};
+
 #define MAX_NAME 4096
                       //!!! If you change NODE_SIZE from 20, change %20s in 2 multi-node format statements.
 #define NODE_SIZE  20
@@ -30,10 +43,14 @@ int get_threads_per_node();
 int TpC_from_lscpu_tmpfile(void);
 int TpC_from_lscpu_popen(void);
 
-void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *icpus, int tpc, char l){ 
 
+void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, nodeinfo info, int *icpus, char l){ 
+
+int tpc;
 int i, ierr, lsdigit, n10, n100;
 char node_header[MAX_NAME];
+
+int ic, id, it;
 
 int cores, cnt, wrap_cont = 0;
 char no_occ;
@@ -60,6 +77,9 @@ char * spaces;
 //    If nthrds = 1, thread number is not printed.
 
 //    See FORTRAN INTERFACE at end
+//void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, nodeinfo info, int *icpus, char l){ 
+
+  tpc=info.TpC;
 
   if( l != 'k') {
       cores=ncpus/tpc;
@@ -68,6 +88,9 @@ char * spaces;
       tpc=1;
       cores=ncpus;  // effectively make hw_threads/core = 1
   }
+//printf("TOP OF FUNCTION: (cores:%d ) ncpus=%d  tpc=%d,  info.TpC=%d  info.\n", cores,ncpus,tpc,info.TpC);
+//printf("*** %d %d %d %d %d %d %d %d\n",  info.proc_order, info.nproc_ids, info.nsockets, info.ncores, info.TpC, info.CpS, info.TpC_verified, info.status);
+//tpc=4;
 
                           // If node names are different, then list them in output
   if(multi_node && hd_prnt){
@@ -144,6 +167,9 @@ char * spaces;
 //                      Print out mask (if 0, print - , == not set)
 //                      Mask index == head group + least significant digit (sdigit)
 
+
+if(info.proc_order == SocEO_Core1st || info.proc_order == SocSeq_Core1st)
+{
     no_occ = ( tpc > 1 && ! force_long )? '=' : '-';
     if( l == 's') no_occ = '-';
     for(i=0;i<ncpus;i++){ 
@@ -170,9 +196,48 @@ char * spaces;
       if(i == ncpus-1)  printf("\n");
      }
     }
+    fflush(stdout);
+}
 
-  }
-  fflush(stdout);
+
+if(info.proc_order == SocSeq_HWT1st)
+{
+    for(it=0;it<tpc;it++){
+      no_occ = ( tpc > 1 && ! force_long && it == 0 )? '=' : '-';
+      if( l == 's') no_occ = '-';
+      for(ic=0;ic<cores;ic++){
+         id = ic*tpc + it;
+
+         if( tpc > 1 && ! force_long ){    // Doing cores
+
+           if(ic == 0 && it != 0){
+              printf("\n%*c",wrap_cont,' ');  // print wrap_continue spaces
+              no_occ='-';
+           }
+
+           lsdigit=ic;
+           if(ic>9){lsdigit= ic - (ic/10)*10; }
+           if(icpus[id] == 1) printf("%1.1d",lsdigit);
+           else               printf("%c"   ,no_occ );
+           if(id == ncpus-1)  printf("\n");
+
+         }
+         else{
+           lsdigit=ic;
+           if(ic>9){lsdigit= ic - (ic/10)*10; }
+           if(icpus[id] == 1) printf("%1.1d",lsdigit);
+           else               printf("%c"   ,no_occ );
+           if(id == ncpus-1)  printf("\n");
+         }
+      } // ic cores
+    } // it hardware threads
+
+    fflush(stdout);
+}
+
+
+} // end hdprt or else
+
 }
 
 
@@ -374,4 +439,208 @@ int TpC_from_lscpu_popen(void)
       {  TpC= (int)l_tpc;  }
 
       return TpC;
+}
+
+void get_node_info(nodeinfo &info)
+{
+
+   // Temporary File and lscpu command variables:
+   char file_template[22]="/tmp/AMASKtemp-XXXXXX"; //directory + template file name
+   char cmd[ 128]        ="lscpu   >";  //size to fit strlen(cmd)+strlen(file)+1
+   char tmp_file[34];                 //size to fit strlen(file_template)+1
+                                      // tmp_file hold lscpu report
+   int status;
+ 
+   FILE *file;
+   char lscpu_line[4096];
+   long ldigit;
+   long int core_num[2], socket_id[2], core_id[2];
+ 
+   int  ierr, knt=0;
+   char  *cptr, *ptr_start, *ptr_end;
+   int   c_diff, s_diff;
+
+   FILE *fd_sibling_file;
+   char name_sibling_file[]="/sys/devices/system/cpu/cpu0/topology/thread_siblings_list";
+   char fscanf_line[4096];
+
+
+   // Create a temporary file (tmp_file)  with the output from lscpu:
+   // tmp_file = cmd + file_template(after random value added for XXXXXX)
+   // 
+   memset(tmp_file,0,sizeof(tmp_file));                        //zero out tmp_file
+   strncpy(      tmp_file,file_template,strlen(file_template));//put in file name
+
+   status = mkstemp(tmp_file); //make sure tmp_file can be made.
+   if(status==-1) {
+      printf("WARNING: mkstemp failed. OK, amask will default to kernel view.\n");
+      unlink(tmp_file);
+      info.status=0;
+      //return info;
+      return ;
+   }
+
+   memcpy(cmd+strlen(cmd),tmp_file,strlen(tmp_file)+1);
+   status=system(cmd);
+   if(status!=0) {
+      printf("WARNING: lscpu failed. OK, amask will default to kernel view.\n");
+      unlink(tmp_file);
+      info.status=0;
+      //return info;
+      return ;
+   }
+
+   file = fopen(tmp_file, "r");
+   if (file == NULL)
+   {
+      ierr=errno;
+      printf("WARNING: fopen failed. OK, amask will default to kernel view.\n");
+      fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
+      printf("        file: %s  errno-string: %s\n",tmp_file,strerror(ierr));
+      unlink(tmp_file);
+      info.status=0;
+      //return info;
+      return ;
+   }
+
+   while (EOF != fscanf(file, "%[^\n]\n", lscpu_line))
+   {
+      if( strstr(lscpu_line,"Thread(s) per core:") != NULL)
+      { 
+        cptr    =lscpu_line;
+        while( *cptr){         //now let's find the first digit, and extract #
+          if(isdigit(*cptr)){
+             info.TpC = (int) strtol(cptr, NULL, 10); //printf("ldigit=%ld\n",ldigit);
+             break;
+          }
+          cptr++; 
+        }
+      }
+
+      if( strstr(lscpu_line,"Socket(s):") != NULL)
+      { 
+        cptr    =lscpu_line;
+        while( *cptr){         //now let's find the first digit, and extract #
+          if(isdigit(*cptr)){
+             info.nsockets = (int) strtol(cptr, NULL, 10); //printf("ldigit=%ld\n",ldigit);
+             break;
+          }
+          cptr++; 
+        }
+      }
+
+      if( strstr(lscpu_line,"Core(s) per socket:") != NULL)
+      {
+        cptr    =lscpu_line;
+        while( *cptr){         //now let's find the first digit, and extract #
+          if(isdigit(*cptr)){
+             info.CpS = (int) strtol(cptr, NULL, 10); //printf("ldigit=%ld\n",ldigit);
+             break;
+          }
+          cptr++; 
+        }
+      }
+
+                                                  //NUMA node0 CPU(s): may also exist.
+                                                  //&& makes sure CPU is at begging.
+      if( strstr(lscpu_line,"CPU(s):") != NULL &&  strstr(lscpu_line,"CPU(s):") == lscpu_line)
+      {
+        cptr    =lscpu_line;
+        while( *cptr){         //now let's find the first digit, and extract #
+          if(isdigit(*cptr)){
+             info.nproc_ids = (int) strtol(cptr, NULL, 10); //printf("ldigit=%ld\n",ldigit);
+             break;
+          }
+          cptr++; 
+        }
+      }
+   }
+
+   if( info.nproc_ids != info.nsockets*info.CpS*info.TpC ){
+      unlink(tmp_file);
+     info.status=0;
+      //return info;
+      return ;
+   }
+
+   info.ncores = info.nsockets*info.CpS;
+   info.proc_order = Order_Error;
+
+      // if TpC >1, should verify in file=/sys/devices/system/cpu/cpu0/topology/thread_siblings_list
+      // Cat file, should not be only "0", must have "#,#", or "#=#".
+      // On small systems TpC has been known not to report TpC correctly (1 when should be > 1).
+
+
+   strncpy(&cmd[6],"-p",2);        // new command, -p give csv for each proc_id,core_id,socket_id ...
+
+   status=system(cmd);
+   if(status!=0) {
+      printf("WARNING: lscpu -p failed. OK, amask will default to kernel view.\n");
+      unlink(tmp_file);
+      info.status=0;
+      fclose(file);
+      unlink(tmp_file);            // Remove temporary file (tmp_file)
+      //return info;
+      return ;
+   }
+
+   file = fopen(tmp_file, "r");
+
+   while (EOF != fscanf(file, "%[^\n]\n", lscpu_line))
+   {
+     if( strstr(lscpu_line,"#") == NULL)
+     {
+       ptr_start = lscpu_line;
+       ptr_end   = lscpu_line;
+       while ( isdigit(*ptr_end++) ){;} ptr_end--;   //{;} keeps xl compiler happy
+ 
+       core_num[knt] = strtol(ptr_start, NULL, 10);   // 1st value
+ 
+       ptr_end++;
+       ptr_start=ptr_end;
+       while ( isdigit(*ptr_end++) ){;} ptr_end--;
+ 
+       socket_id[knt] = strtol(ptr_start, NULL, 10);  // 2nd value
+ 
+       ptr_end++;
+       ptr_start=ptr_end;
+       while ( isdigit(*ptr_end++) ){;} ptr_end--;
+ 
+       core_id[knt] = strtol(ptr_start, NULL, 10);    // 3rd value
+ 
+       knt++;
+     }
+     if(knt == 2) break;
+   }
+
+   info.status=1;
+ 
+   s_diff= (int)( socket_id[1]-socket_id[0] );
+   c_diff= (int)(   core_id[1]-  core_id[0] );
+
+   if( s_diff == 0 && c_diff == 0 ) info.proc_order=SocSeq_HWT1st;
+   if( s_diff  > 0 && c_diff  > 0 ) info.proc_order=SocEO_Core1st;
+   if( s_diff == 0 && c_diff  > 0 ) info.proc_order=SocSeq_Core1st;
+   if( s_diff  > 0 && c_diff == 0 ) info.proc_order=Order_Error;
+
+   if( info.TpC == 1  ){    // lscpu may be wrong about TpC=1; verify
+      fd_sibling_file = fopen(name_sibling_file, "r");
+      if (fd_sibling_file == NULL) {
+        info.TpC_verified=0;
+      }
+      else{
+        fscanf(fd_sibling_file, "%[^\n]\n", fscanf_line);
+        if ( fscanf_line[1] == '\0') info.TpC_verified=1;
+      //if ( fscanf_line[1] == '\0' && info.TpC == 1 ) info.TpC_verified=1; // OK
+      //if ( fscanf_line[1] == '\0' && info.TpC  > 1 ) info.TpC_verified=0; //probably will never happen
+      //if ( fscanf_line[1] != '\0' && info.TpC  > 1 ) info.TpC_verified=1; // OK
+      //if ( fscanf_line[1] != '\0' && info.TpC == 1 ) info.TpC_verified=0; //probable wrong case
+      }
+   }
+   info.TpC_verified=1;
+
+   fclose(file);
+   unlink(tmp_file);            // Remove temporary file (tmp_file)
+   //return info;
+   return ;
 }

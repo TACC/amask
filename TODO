@@ -3,10 +3,17 @@
 1. Colorize mask charactes according to hardware
    (socket and HWT)
 
-2. Make src/Makefile more general.
+2. Make src/Makefile more general. (DONE 1/2020)
 
 3. Clean up description of "core id".
 
 4. Use hwloc when available. 
 
 5. Include unit tests.
+
+6. Fix/Check Fortran API
+
+7. Create rdtsc for ppc64le
+
+8. Put in a version number-- 
+   what were you thinking to to have one!

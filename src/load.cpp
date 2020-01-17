@@ -19,6 +19,7 @@ int             myspin(int     );
 double      gtod_timer(        );
 int     load_cpu_nsec_(int *sec);
 void     load_cpu_nsec(int     );
+
 //                          Fortran Version
 int load_cpu_nsec_(int *sec){
     load_cpu_nsec(     *sec);

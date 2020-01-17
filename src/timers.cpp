@@ -35,7 +35,7 @@
 */
 #include <stdlib.h>
 #include <sys/time.h>
-#include <cstdlib>
+//#include <cstdlib>
 #include <sys/time.h>
 
 double gtod_secbase = 0.0E0;
@@ -77,6 +77,7 @@ double gtod_timer_()
 }
 
 
+#ifdef X86_64
 static __inline unsigned long long tsc(void){
   unsigned long a, d;
   unsigned long long d2;
@@ -89,3 +90,4 @@ static __inline unsigned long long tsc(void){
 
 unsigned long long   tsc_timer(void){ return  tsc(); }
 unsigned long long  tsc_timer_(void){ return  tsc(); }
+#endif

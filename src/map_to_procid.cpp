@@ -16,7 +16,8 @@ int map_to_procid( int procid){
 }
 
 void  map_to_procid_(int *procid){
-int i;
-    i=map_to_procid(     *procid);
-    if( i!=0 ) exit(1);
+  int i;
+  i=map_to_procid(     *procid);
+  if( i!=0 ) exit(1);
+  return;
 }

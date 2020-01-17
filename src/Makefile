@@ -1,129 +1,216 @@
+# Find the type of compiler and mpi
+#     Cannot depend on environment variables MPI_ROOT, MPI_HOME, MPICH_HOME or I_MPI_ROOT
+#     Some sites leave variables such as I_MPI_ROOT set, when changing from impi to openmpi
+#     Will use `which mpi`, to determine mpi type (very often it can be found in the path)
+#     Will use the compiler from `mpicc -show` (first string is the cc ompiler used)
 #
-# Intel Compilers (IMPI or MVAPICH2)
-CC_SER  =   icpc -g
-CC_MPI  = mpicxx -g
-CC_OMP  =   icpc -g -fopenmp
-CC_HYB  = mpicxx -g -fopenmp
-LD_MPI  = mpicxx -g
-LD_OMP  =   icpc -g -fopenmp
-LD_HYB  = mpicxx -g -fopenmp
 
-#CHPC South Africa:  Intel Compiler (OpenMPI)
-#CHPC_HOST =lengau
+# 
+# New, general logic for Compiler and MPI determination    Kent Milfeld 2020/1/9
+# It isn't necessary to know which MPI type is used.  
+# The MPI logic is for future use or for other makefiles.
+#
+ AR       = ar
 
-AR      = ar
+ DB       = -g
 
-ifeq ($(TACC_SYSTEM),frontera)
-   LOAD_X=-xhost
+ CXX_MPI  = mpicxx
+ CXX_HYB  = mpicxx
+
+ LD_MPI   = mpicxx
+ LD_HYB   = mpicxx
+
+#
+#                                       Compiler/MPI logic by Kent Milfeld 2020/1/9
+
+#  Determine if Cray machine (uses ftn, CC and cc for serial and mpi code or non-Cray
+
+ CC_status     := $(shell CC -V        >/dev/null 2>&1 || echo 1)
+ mpicxx_status := $(shell mpicxx -show >/dev/null 2>&1 || echo 1)
+
+ifneq ($(mpicxx_status),1) #ON a non-Cray or Cray Jail Broke machine
+
+   #                                       Extract MPI type from mpicxx path
+   #                                       Generally works better han Env. Vars
+   mpicxx_path := $(shell which  mpicxx)
+   mpi_type = unknown
+   
+   ifneq (,$(findstring spectrum_mpi,$(mpicxx_path)))
+     mpi_type = spectrum_mpi
+     #          uses: mpif90 mpif77 mpifort    mpicc     mpic++ mpiCC mpicxx  -->opal_wrapper Spec_OMPI
+     #          uses:            mpipgifort  mpipgcc  mpipgic++               -->opal_wrapper Spec_OMPI
+     #          uses: mpixlf                  mpixlc                  mpixlC  -->opal_wrapper Spec_OMPI
+   endif
+   
+   ifneq (,$(findstring impi,$(mpicxx_path)))
+     mpi_type = impi
+   else                                     #impi path may have compilers_and_libraries instead of impi
+      ifneq (,$(findstring compilers_and_libraries,$(mpicxx_path)))
+        mpi_type = impi
+      endif
+     #          uses: mpif90 mpif77 ->mpiifort  mpicc ->mpiicc mpicxx-> mpiicpc  IMPI
+   endif
+   
+   ifneq (,$(findstring mvapich2,$(mpicxx_path)))
+     mpi_type = mvapich2
+     #          uses: mpif90 mpif77 ->mpifort  mpicc mpic++-> mpicxx  MV2
+   endif
+   
+   ifneq (,$(findstring openmpi,$(mpicxx_path)))
+     mpi_type = openmpi
+     #          uses: mpif90 mpif77 mpifort  mpicc mpic++ mpiCC mpicxx  -->opal_wrapper OMPI
+   endif
+   
+   ifneq (,$(findstring cray_mpich,$(mpicxx_path)))
+     mpi_type = cray_mpich
+     #          uses: mpif90, mpif77, mpicc, mpicxx
+   endif
 endif
 
-ifeq ($(TACC_SYSTEM),stampede)
-   LOAD_X=-xhost
-endif
-ifeq ($(TACC_SYSTEM),stampedeknl)
-   LOAD_X=-xMIC-AVX512
-endif
-ifeq ($(TACC_SYSTEM),ls5)
-   LOAD_X=-xhost
-endif
-ifeq ($(NERSC_HOST),cori)
-   LOAD_X=-xhost
-
-   CC_SER  = CC -g
-   CC_MPI  = CC -g
-   CC_OMP  = CC -fopenmp -g
-   CC_HYB  = CC -fopenmp -g
-
-   LD_MPI  = CC -g
-   LD_OMP  = CC -fopenmp -g
-   LD_HYB  = CC -fopenmp -g
-endif
-
-ifeq ($(CHPC_HOST),lengau)
-CC_SER  =    c++ -g
-CC_MPI  = mpicxx -g
-CC_OMP  =    c++ -fopenmp -g
-CC_HYB  = mpicxx -fopenmp -g
-LD_MPI  = mpicxx -g
-LD_OMP  =    c++ -fopenmp -g
-LD_HYB  = mpicxx -fopenmp -g
+ifneq ($(CC_status),1)   #ON a Cray  machine
+     mpi_type = cray_mpich
 endif
 
 
-#rm -fr $(EXES) $(DRIVER_OBJECTS) $(LIB_OBJECTS) $(LIB) *.mod
+ifneq ($(mpicxx_status),1) #ON a non-Cray or Cray Jail Broke machine
+   #                                       Extract compiler family from mpicxx command
+   #                                       first argument (command) may be a full path
+   mpicxx_show := $(shell mpicxx -show | awk '{print $1}' )
+   mpicc_compiler = unknown
+   
+   ifneq (,$(findstring xlC_r,$(mpicxx_show)))
+     CXX      =  xlC_r
+     OMP_FLAG = -fopenmp
+     ARCH     = -Dppc64le
 
-#                               new load code auto adjusts for units of seconds.
-#CFLAGS	= -D _GNU_SOURCE -D LS5 no longer required
-#CFLAGS	= -D _GNU_SOURCE -D SP1 no longer required
-#CFLAGS	= -D _GNU_SOURCE        Required only for timers, boundto and mapto_procid  added separate rule for timers
+     #          -qsmp=omp  works too, -fopenmp is actually an acceptance of gcc syntax
+     #          usage:
+     #          mpif90 mpif77 mpifort    mpicc     mpic++ mpiCC mpicxx  -->opal_wrapper Spec_OMPI
+     #          xlf_r                    xlc_r                  xlC_r
+   endif
+   
+   ifneq (,$(findstring icpc,$(mpicxx_show)))
+     CXX      =  icpc
+     OMP_FLAG = -fopenmp
+     ARCH     = -DX86_64
+
+     # usage:
+     # mpif90 mpif77 ->mpifort  mpicc mpic++-> mpicxx  MV2
+     #                   ifort    icc          icpc
+   endif
+   
+   ifneq (,$(findstring pgc++,$(mpicxx_show)))
+     CXX      =  pgc++
+     OMP_FLAG = -mp
+     ARCH     = 
+   
+     # usage:
+     # mpif90 mpif77 mpifort  mpicc mpic++ mpiCC mpicxx  -->opal_wrapper OMPI
+     #             pgfortran   pgcc               pgc++
+   endif
+   
+   ifneq (,$(findstring g++,$(mpixx_show)))
+     CXX      =  g++
+     OMP_FLAG = -fopenmp
+     ARCH     = 
+
+     # usage:
+     # mpif90 mpif77 ->mpifort  mpicc mpic++-> mpicxx  MV2
+     #                gfortran    gcc            g++ 
+   endif
+   
+endif
+
+ifneq ($(CC_status),1)   #ON a Cray  machine
+   CXX   =   CC
+   OMP_FLAG = -fopenmp
+#  TODO
+#  need to test CC -craype-verbose to determine compiler here, so as to 
+#  apply -homp, -fopenmp, -qopenmp, -mp or -openmp
+#  -fopenmp will work for icpc and g++
+endif
+
+ LD_OMP=$(CXX)
  CFLAGS	= 
 LDFLAGS	= 
 
-DRIVER_SOURCES = amask_mpi.c amask_omp.c amask_hybrid.c 
-DRIVER_OBJECTS = $(DRIVER_SOURCES:.c=.o)
+DRIVER_SOURCES = amask_mpi.cpp amask_omp.cpp amask_hybrid.cpp
+DRIVER_OBJECTS = $(DRIVER_SOURCES:.cpp=.o)
 
-#LIB_SOURCES=boundto.c cmdln_args.c load.c map_to_procid.c print_mask.c timers.c mpi_report_mask.c omp_report_mask.c hybrid_report_mask.c opts.cpp
- LIB_SOURCES=boundto.c              load.c map_to_procid.c print_mask.c timers.c mpi_report_mask.c omp_report_mask.c hybrid_report_mask.c opts.cpp
-#LIB_OBJECTS = $(LIB_SOURCES:.c=.o)
- LIB_OBJECTS =boundto.o             load.o map_to_procid.o print_mask.o timers.o mpi_report_mask.o omp_report_mask.o hybrid_report_mask.o opts.o
+LIB_SOURCES=boundto.cpp load.cpp map_to_procid.cpp print_mask.cpp timers.cpp mpi_report_mask.cpp omp_report_mask.cpp hybrid_report_mask.cpp opts.cpp
+LIB_OBJECTS=boundto.o   load.o   map_to_procid.o   print_mask.o   timers.o   mpi_report_mask.o   omp_report_mask.o   hybrid_report_mask.o   opts.o
+
+#SOURCES = $(wildcard *.cpp)
+#OBJS = $(OBJS:.cpp=o)
 
 
 LIB     = amask.a
-EXES	= $(DRIVER_SOURCES:.c=)
+EXES	= $(DRIVER_SOURCES:.cpp=)
 #EXES = amask_mpi amask_omp amask_hybrid 
 
 all: $(EXES)
 
-amask_mpi    :            amask_mpi.o                       $(LIB)
-	$(LD_MPI) $(LDFLAGS_MPI)  amask_mpi.o    -o amask_mpi    $(LIB)
-	mkdir -p ../bin
-	cp -p  amask_mpi ../bin
-amask_omp    :            amask_omp.o                       $(LIB)
-	$(LD_OMP) $(LDFLAGS_OMP)  amask_omp.o    -o amask_omp    $(LIB)
-	mkdir -p ../bin
-	cp -p  amask_omp ../bin
-amask_hybrid :            amask_hybrid.o                    $(LIB)
-	$(LD_HYB) $(LDFLAGS_HYB)  amask_hybrid.o -o amask_hybrid $(LIB)
-	mkdir -p ../bin
-	cp -p  amask_hybrid ../bin
+amask_mpi    :                         amask_mpi.o                  $(LIB)
+	$(LD_MPI)  $(DB)               amask_mpi.o  -o amask_mpi    $(LIB)
+	mkdir   -p ../bin
+	cp      -p  amask_mpi ../bin
+amask_omp    :                         amask_omp.o                  $(LIB)
+	$(LD_OMP)    $(DB) $(OMP_FLAG) amask_omp.o  -o amask_omp    $(LIB)
+	mkdir   -p ../bin
+	cp      -p  amask_omp ../bin
+amask_hybrid :                       amask_hybrid.o                 $(LIB)
+	$(LD_HYB)  $(DB) $(OMP_FLAG) amask_hybrid.o -o amask_hybrid $(LIB)
+	mkdir   -p ../bin
+	cp      -p  amask_hybrid ../bin
 
 
 $(LIB) : $(LIB_OBJECTS)
-	$(AR) -csr  $@  $^
-	mkdir -p ../lib
-	cp -p $(LIB) ../lib
+	$(AR)   -csr  $@  $^
+	mkdir   -p ../lib
+	cp      -p $(LIB) ../lib
 
-amask_mpi.o    : amask_mpi.c 
-	$(CC_MPI) $(CFLAGS) -c $< -o $@
-mpi_report_mask.o : mpi_report_mask.c
-	$(CC_MPI) $(CFLAGS) -c $< -o $@
+#                              Pure MPI Compilations
+amask_mpi.o: amask_mpi.cpp
+	$(CXX_MPI)  $(DB) $(CFLAGS)            -c $< -o $@
 
-amask_omp.o    :  amask_omp.c
-	$(CC_OMP) $(CFLAGS) -c $< -o $@
-omp_report_mask.o :  omp_report_mask.c
-	$(CC_OMP) $(CFLAGS) -c $< -o $@
+mpi_report_mask.o: mpi_report_mask.cpp
+	$(CXX_MPI)  $(DB) $(CFLAGS)            -c $< -o $@
 
-amask_hybrid.o    :  amask_hybrid.c
-	$(CC_HYB) $(CFLAGS) -c $< -o $@
-hybrid_report_mask.o :  hybrid_report_mask.c
-	$(CC_HYB) $(CFLAGS) -c $< -o $@
+#                                Hybrid Compilations
+amask_hybrid.o: amask_hybrid.cpp
+	$(CXX_HYB)  $(DB) $(CFLAGS) $(OMP_FLAG) -c $< -o $@
 
+hybrid_report_mask.o: hybrid_report_mask.cpp
+	$(CXX_HYB)  $(DB) $(CFLAGS) $(OMP_FLAG) -c $< -o $@
 
-load.o  : load.c
-	$(CC_SER) $(LOAD_X) -DCMASK_LOAD -O3  -c $< -o $@
+#                              Pure OMP Compilations
+amask_omp.o: amask_omp.cpp
+	$(CXX)    $(DB) $(CFLAGS) $(OMP_FLAG)  -c $< -o $@
 
-boundto.o  : boundto.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
-map_to_procid.o  : map_to_procid.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
-timers.o  : timers.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
-opts.o  : opts.cpp
-	$(CC_SER)                 -c $< -o $@
+omp_report_mask.o: omp_report_mask.cpp
+	$(CXX)    $(DB) $(CFLAGS) $(OMP_FLAG)  -c $< -o $@
 
 
-%.o : %.c
-	$(CC_SER) $(CFLAGS) -c $< -o $@
+
+#                                Serial Compilations
+load.o: load.cpp
+	$(CXX)    $(DB) -DCMASK_LOAD -O3       -c $< -o $@
+
+boundto.o: boundto.cpp
+	$(CXX)    $(DB) -D_GNU_SOURCE          -c $< -o $@
+
+map_to_procid.o: map_to_procid.cpp
+	$(CXX)    $(DB) -D_GNU_SOURCE         -c $< -o $@
+
+timers.o: timers.cpp
+	$(CXX)    $(DB) -D_GNU_SOURCE $(ARCH)  -c $< -o $@
+
+opts.o: opts.cpp
+	$(CXX)    $(DB)                        -c $< -o $@
+
+
+%.o: %.cpp
+	$(CXX)    $(DB) $(CFLAGS)              -c $< -o $@
 
 
 .PHONY: install clean cleanall

@@ -29,16 +29,33 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <ctype.h>
-
 #include "opts.h"
+#include <errno.h>
+
+enum  proc_id_ordering { SocSeq_HWT1st, SocEO_Core1st, SocSeq_Core1st, Order_Error };
+
+struct nodeinfo{
+    enum proc_id_ordering proc_order;
+    int  nproc_ids;
+    int  nsockets;
+    int  ncores;
+    int  TpC;
+    int  CpS;
+    int  TpC_verified;   // nsockets/ncores/TpC verified
+    int  status;   // nsockets/ncores/TpC verified
+};
 
                                   // basic routes
-void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, int *proc_mask, int tpc, char v);
+void print_mask(int hd_prnt, char* name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, nodeinfo info, int *proc_mask,  char v);
+
 int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
+void get_node_info(nodeinfo &info);
 
 
 int amask_mpi(){
+
+nodeinfo info;
 
 int thrd, nthrds, ncpus;
 int rank, nranks;
@@ -65,7 +82,14 @@ int  tpc;      //hwthreads/core
    p = opts.get_p();
    v = opts.get_v();
 
-   tpc=get_threads_per_node();
+   get_node_info(info);
+   if(info.status == 0){
+       printf("ERROR: lscpu failed.\n");
+       fprintf(stderr,"        code file: %s     line: %d\n", __FILE__,__LINE__);
+     //ierr=errno;printf("%s\n",strerror(ierr));
+   }
+   tpc    = info.TpC;
+// tpc=get_threads_per_node();
 
                    // Get number of cpus (this gives no. of cpu_ids in /proc/cpuinfo)
                    // Get rank number & no of ranks via MPI
@@ -116,13 +140,13 @@ int  tpc;      //hwthreads/core
 
                                 // Master prints information
    if(rank == 0){
-         print_mask(1,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,v);  //print header
+         print_mask(1,  all_names,               multi_node, id,0, ncpus, nranks,1,  info, all_masks,v);  //print header
       for(id=0;id<nranks;id++){
-         print_mask(0, &all_names[id*(max_name_len+1)], multi_node, id,0, ncpus, nranks,1, &all_masks[id*ncpus],tpc,v);
+         print_mask(0, &all_names[id*(max_name_len+1)], multi_node, id,0, ncpus, nranks,1, info, &all_masks[id*ncpus],v);
          if(p == 's') ierr=usleep(1000000);
       }
       if(nranks>25)
-         print_mask(2,  all_names,               multi_node, id,0, ncpus, nranks,1,  all_masks,tpc,v);  //print header
+         print_mask(2,  all_names,               multi_node, id,0, ncpus, nranks,1,  info, all_masks,v);  //print header
    }
 
                                // Free space
@@ -131,6 +155,7 @@ int  tpc;      //hwthreads/core
                          free( all_masks);
                          free( all_names);
 
+   return 0;
 }
 
-void amask_mpi_(){ (void) amask_mpi(); }
+void amask_mpi_(){ amask_mpi(); return; }
