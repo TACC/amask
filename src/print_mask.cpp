@@ -753,8 +753,6 @@ void get_node_info(nodeinfo &info)
  
    s_diff= (int)( socket_id[1]-socket_id[0] );
    c_diff= (int)(   core_id[1]-  core_id[0] );
-printf("s_diff=%d c_diff=%d\n",s_diff, c_diff);
-printf("socket_id[0]=%d,socket_id[1]=%d,  core_id[0]=%d, core_id[1]=%d \n",socket_id[0],socket_id[1], core_id[0],core_id[1] ); 
 
    if( s_diff == 0 && c_diff == 0 ) info.proc_order=SocSeq_HWT1st;
    if( s_diff  > 0 && c_diff  > 0 ) info.proc_order=SocEO_Core1st;
