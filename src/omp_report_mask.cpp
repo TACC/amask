@@ -72,7 +72,6 @@ static int  tpc;   // hwthreads/core
         //ierr=errno;printf("%s\n",strerror(ierr));
       }
       tpc    = info.TpC;
-printf("OMP_REPORT_TPC=%d\n", info.TpC);
    // tpc    =  get_threads_per_node();
       nthrds =  omp_get_num_threads();
       ncpus  =  (int) sysconf(_SC_NPROCESSORS_ONLN);

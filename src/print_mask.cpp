@@ -34,6 +34,19 @@ struct nodeinfo{
     int  TpC_verified;   // nsockets/ncores/TpC verified
     int  status;   // nsockets/ncores/TpC verified
 };
+const char * C[] = {
+    "\033[102m",
+    "\033[103m",
+    "\033[105m",
+    "\033[106m",
+    "\033[107m",
+    "\033[101m",
+    "\033[100m",
+    "\033[104m"
+};
+const char RESET[] = {"\033[0m"};
+
+
 
 #define MAX_NAME 4096
                       //!!! If you change NODE_SIZE from 20, change %20s in 2 multi-node format statements.
@@ -79,7 +92,15 @@ char * spaces;
 //    See FORTRAN INTERFACE at end
 //void print_mask(int hd_prnt, char *name, int multi_node, int rank, int thrd, int ncpus, int nranks, int nthrds, nodeinfo info, int *icpus, char l){ 
 
+   int color=1;
+
+   int k, is, ic_socket, sockets, cores_per_socket;
+   char str[6096];    // for 1000 cores on node: need 1K bytes
+                      // + wrap_cont + tpc*6B (C[i]=6B) + 4B (RESET)
+                      // This should line size out to 2050, I hope :)
+
   tpc=info.TpC;
+  sockets=info.nsockets;
 
   if( l != 'k') {
       cores=ncpus/tpc;
@@ -167,41 +188,155 @@ char * spaces;
 //                      Print out mask (if 0, print - , == not set)
 //                      Mask index == head group + least significant digit (sdigit)
 
+//printf("else TpC=%d ncpus=%d proc_order=%d \n",info.TpC,ncpus,info.proc_order);
+//printf("else SocSeq_Core1st=%d\n",SocSeq_Core1st);
 
-if(info.proc_order == SocEO_Core1st || info.proc_order == SocSeq_Core1st)
+if(info.proc_order == SocEO_Core1st)
 {
-    no_occ = ( tpc > 1 && ! force_long )? '=' : '-';
-    if( l == 's') no_occ = '-';
-    for(i=0;i<ncpus;i++){ 
-     ii = i%cores;
 
-     if( tpc > 1 && ! force_long ){    // Doing cores
-      
-      if(ii == 0 && i != 0){ 
-         printf("\n%*c",wrap_cont,' ');  // print wrap_continue spaces
-         no_occ='-';
+//  @@ NOTE @@        // When forcing kernel view tpc is made equal to 1
+//                    // Hence cores_per_socket will become HWTs_per_socket
+
+ cores_per_socket=ncpus/(sockets*tpc);
+
+ if(color == 1)
+ {
+                     // if kernel view, cores is set to ncpus
+    no_occ = ( tpc > 1 )? '=' : '-';
+    if( l == 's') no_occ = '-';
+
+    k = 0;
+    for(i=0;i<ncpus;i++){ 
+      ii = i%cores;
+      is = ii%2;
+
+      if(ii == 0 && i != 0)
+      {  
+        memset(&str[k],' ',(size_t)wrap_cont);  k+=wrap_cont; // print wrap_continue spaces 
       }
+
+      strncpy(&str[k],C[is],strlen(C[is])); k+=strlen(C[is]);
 
       lsdigit=ii;
       if(ii>9){lsdigit= ii - (ii/10)*10; }
-      if(icpus[i] == 1) printf("%1.1d",lsdigit);
-      else              printf("%c"   ,no_occ );
-      if(i == ncpus-1)  printf("\n");
-     }
-     else{
-      lsdigit=i;
-      if(i>9){lsdigit= i - (i/10)*10; }
-      if(icpus[i] == 1) printf("%1.1d",lsdigit);
-      else              printf("%c"   ,no_occ );
-      if(i == ncpus-1)  printf("\n");
-     }
+      if(icpus[i] == 1) { str[k++] = lsdigit+'0'; }
+      else              { str[k++] = no_occ ;     } 
+
+      if(ii == cores-1)
+      {
+         strncpy(&str[k],RESET,strlen(RESET));  k+=strlen(RESET);    // Reset default color before adding return
+         str[k++] = '\n';
+      }
+
+   } // for i ncpus
+   str[k++] = '\0';                           // Add return and end of string
+   printf("%s",str);
+
+ } 
+}
+
+if( info.proc_order == SocSeq_Core1st)
+{
+  // sockets=2; // for checking (e.g. pretend multiple sockets on KNL)
+
+  cores_per_socket=ncpus/(sockets*tpc);
+
+ if(color == 1)
+ {
+
+  for(it=0;it<tpc;it++)
+  {
+    k=0;
+                     // if kernel view, cores is set to ncpus
+    no_occ = ( tpc > 1 && it == 0 )? '=' : '-';
+    if( l == 's') no_occ = '-';
+
+    if( tpc > 1 &&  it != 0 )
+    {
+      memset(&str[k],' ',(size_t)wrap_cont);  k+=wrap_cont; // print wrap_continue spaces
     }
+
+    for(is=0;is<sockets;is++){ 
+                                  // Add color for sockets
+      if(sockets>1){ strncpy(&str[k],C[is],strlen(C[is])); k+=strlen(C[is]); }
+
+      for(ic_socket=0;ic_socket<cores_per_socket;ic_socket++)
+        {
+          ic =                                is*cores_per_socket + ic_socket;
+        //id =  it*sockets*cores_per_socket + is*cores_per_socket + ic;
+          id =  it*sockets*cores_per_socket + is*cores_per_socket + ic_socket;
+
+          lsdigit=ic;
+          if(ic>9){lsdigit= ic - (ic/10)*10; }
+          if(icpus[id] == 1){ str[k++] = lsdigit+'0'; }
+          else              { str[k++] = no_occ;      }
+
+        } // ic cores of a socket
+    } // is sockets
+
+                                // Reset default color before adding return
+    if(sockets>1) {strncpy(&str[k],RESET,strlen(RESET));  k+=strlen(RESET);}
+
+    str[k++] = '\n'; str[k++] = '\0';                           // Add return and end of string
+    printf("%s",str);
     fflush(stdout);
+
+  } // it hardware threads
+
+ } // if color
+
 }
 
 
 if(info.proc_order == SocSeq_HWT1st)
 {
+
+ int color=1;
+
+ if(color ==  1){
+
+//  @@ NOTE @@         // When forcing kernel view tpc is made equal to 1
+//                     // Hence cores_per_socket will become HWTs_per_socket
+    cores_per_socket=ncpus/(sockets*tpc);
+
+    for(it=0;it<tpc;it++){
+      k=0;
+
+    //no_occ = ( tpc > 1 && ! force_long && it == 0 )? '=' : '-';
+      no_occ = ( tpc > 1 && it == 0 )? '=' : '-';
+      if( l == 's') no_occ = '-';
+ 
+      if( tpc > 1 &&  it != 0 )
+      {
+        memset(&str[k],' ',(size_t)wrap_cont);  k+=wrap_cont; // print wrap_continue spaces
+      }
+ 
+      for(is=0;is<sockets;is++){
+        strncpy(&str[k],C[is],strlen(C[is])); k+=strlen(C[is]);
+ 
+        for(ic_socket=0;ic_socket<cores_per_socket;ic_socket++){
+          ic =  is*cores_per_socket + ic_socket;
+          id =  ic*tpc + it;
+ 
+          lsdigit=ic;
+          if(ic>9){lsdigit= ic - (ic/10)*10; }
+          if(icpus[id] == 1){ str[k++] = lsdigit+'0'; }
+          else              { str[k++] = no_occ;      }
+ 
+        } // ic cores of a socket
+      } // is sockets
+ 
+      strncpy(&str[k],RESET,strlen(RESET));  k+=strlen(RESET);    // Reset default color before adding return
+      str[k++] = '\n'; str[k++] = '\0';                           // Add return and end of string
+      printf("%s",str);
+      fflush(stdout);
+
+    } // it hardware threads
+
+
+ }
+ else
+ {
     for(it=0;it<tpc;it++){
       no_occ = ( tpc > 1 && ! force_long && it == 0 )? '=' : '-';
       if( l == 's') no_occ = '-';
@@ -233,10 +368,11 @@ if(info.proc_order == SocSeq_HWT1st)
     } // it hardware threads
 
     fflush(stdout);
+ }
 }
 
 
-} // end hdprt or else
+  } // end hdprt or else
 
 }
 
@@ -600,13 +736,13 @@ void get_node_info(nodeinfo &info)
        ptr_start=ptr_end;
        while ( isdigit(*ptr_end++) ){;} ptr_end--;
  
-       socket_id[knt] = strtol(ptr_start, NULL, 10);  // 2nd value
+       core_id[knt] = strtol(ptr_start, NULL, 10);  // 2nd value
  
        ptr_end++;
        ptr_start=ptr_end;
        while ( isdigit(*ptr_end++) ){;} ptr_end--;
  
-       core_id[knt] = strtol(ptr_start, NULL, 10);    // 3rd value
+       socket_id[knt] = strtol(ptr_start, NULL, 10);    // 3rd value
  
        knt++;
      }
@@ -617,6 +753,8 @@ void get_node_info(nodeinfo &info)
  
    s_diff= (int)( socket_id[1]-socket_id[0] );
    c_diff= (int)(   core_id[1]-  core_id[0] );
+printf("s_diff=%d c_diff=%d\n",s_diff, c_diff);
+printf("socket_id[0]=%d,socket_id[1]=%d,  core_id[0]=%d, core_id[1]=%d \n",socket_id[0],socket_id[1], core_id[0],core_id[1] ); 
 
    if( s_diff == 0 && c_diff == 0 ) info.proc_order=SocSeq_HWT1st;
    if( s_diff  > 0 && c_diff  > 0 ) info.proc_order=SocEO_Core1st;
