@@ -14,7 +14,7 @@ LD_HYB  = mpicxx -g -fopenmp
 AR      = ar
 
 ifeq ($(TACC_SYSTEM),frontera)
-   LOAD_X=-xhost
+   LOAD_X=-xCORE-AVX2 -axCORE-AVX512
 endif
 
 ifeq ($(TACC_SYSTEM),stampede)
