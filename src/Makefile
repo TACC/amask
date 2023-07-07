@@ -126,7 +126,7 @@ timers.o  : timers.c
 opts.o  : opts.cpp
 	$(CC_SER)                 -c $< -o $@
 print_mask.o  : print_mask.c
-	$(CC_SER) $(D_LSCPU)      -c $< -o $@
+	$(CC_SER) $(D_LSCPU) -std=c++11 -c $< -o $@
 
 
 %.o : %.c
