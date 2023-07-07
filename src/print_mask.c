@@ -21,6 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <thread>
 
 #define MAX_NAME 4096
                       //!!! If you change NODE_SIZE from 20, change %20s in 2 multi-node format statements.
@@ -230,7 +231,7 @@ int get_threads_per_node(){
                                // from a master/single region
                                // without getting this runtime warning:
 //OMP: Warning #190: Forking a process while a parallel region is active is potentially unsafe.
-#if __INTEL_COMPILER == 1900
+#if __INTEL_COMPILER >= 1900
    method=tmpfile;
 #endif
 #endif
@@ -248,11 +249,14 @@ int get_threads_per_node(){
 #endif
 
                                        // popen is broken on KNL, use tmpfile method
-   if ( system("grep 'Phi(TM)' /proc/cpuinfo  > /dev/null 2>&1") == 0 ) method=tmpfile;
+// if ( system("grep 'Phi(TM)' /proc/cpuinfo  > /dev/null 2>&1") == 0 ) method=tmpfile;
 
 
               //Make sure lscpu is available.
-   ret_lscpu = system("lscpu > /dev/null 2>&1"); 
+   ret_lscpu = 0;
+#ifndef HAS_LSCPU
+   ret_lscpu = 1;
+#endif
 
               //Report  Threads per Core.
    TpC=-1;
@@ -309,7 +313,6 @@ int TpC_from_lscpu_tmpfile(void)
       status=system(cmd);
       if(status==-1) printf("WARNING: lscpu failed. OK, amask will default to kernel view.\n");
    }
-
 
    if(status!=-1){
       file = fopen(tmp_file, "r");

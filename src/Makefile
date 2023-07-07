@@ -8,6 +8,11 @@ LD_MPI  = mpicxx -g
 LD_OMP  =   icpc -g -fopenmp
 LD_HYB  = mpicxx -g -fopenmp
 
+D_LSCPU=
+ifeq ($(shell lscpu >& /dev/null && echo 1 || echo 0), 1)
+D_LSCPU=-DHAS_LSCPU
+endif
+
 #CHPC South Africa:  Intel Compiler (OpenMPI)
 #CHPC_HOST =lengau
 
@@ -120,6 +125,8 @@ timers.o  : timers.c
 	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
 opts.o  : opts.cpp
 	$(CC_SER)                 -c $< -o $@
+print_mask.o  : print_mask.c
+	$(CC_SER) $(D_LSCPU)      -c $< -o $@
 
 
 %.o : %.c

@@ -65,13 +65,14 @@ int  tpc;      //hwthreads/core
    p = opts.get_p();
    v = opts.get_v();
 
-   tpc=get_threads_per_node();
-
                    // Get number of cpus (this gives no. of cpu_ids in /proc/cpuinfo)
                    // Get rank number & no of ranks via MPI
    ncpus = (int) sysconf(_SC_NPROCESSORS_ONLN);
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+
+   if( rank == 0 ) tpc=get_threads_per_node();      // when called by all ranks, impi runtime breaks!
+   MPI_Bcast(&tpc, 1, MPI_INT, 0, MPI_COMM_WORLD);  // Fixed after Version 19.
 
                    // Create a 2-D array for mask
                    // proc_mask[rank][ncpus] -- for simplicity, size is [ncpus][ncpus]
