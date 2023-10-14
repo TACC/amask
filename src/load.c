@@ -1,6 +1,8 @@
 #include <string.h>
+#include <math.h>
 #include <cstdlib>
 #include <stdio.h>
+#include <unistd.h>
 #ifdef CMASK_LOAD
 #include "opts.h"
 #endif
@@ -34,8 +36,10 @@ void load_cpu_nsec(int sec ){
 // remaining time an appropriate number of iterations is determined
 // and executed.
 
-int i,j, isum;
-int iters, base_iters=10000000;
+int i,j; 
+double arg, isum,factor=0.000000000001;
+int base_iters=1000000;
+long long int iters;
 
 float fsec, test_cost, startup_cost, test_factor, sec_p_base;
 
@@ -70,49 +74,25 @@ int  slen, knt = 0;
 
 
 //                          Determine a base cost to run myspin.
-
-                                            // this is just a warm up
-      t0=gtod_timer();
-         isum= myspin(5);                   // Make sure the instruction are in cache
-         if(isum==0) printf("%d\n",isum);   // (if on isum) don't optimize  away myspin
-      t1=gtod_timer();
-      startup_cost = t1-t0;
-
-      t0=gtod_timer();                      // run 10 samples to determine time for base_iters
-      for(i=0;i<10;i++){
-         isum= myspin(base_iters+i);        // (+i)don't optimize away
-         if(isum==0) printf("%d\n",isum);   // (if on isum) don't optimize  away myspin
-      }
+      //warm up
+      for(i=0;i<base_iters;i++){ arg=i*factor+0.00002; isum += sin(arg)*cos(arg); }
+      if(isum<-1.0e0) printf("%lf\n",isum);   // don't optimize  away myspin
+					      //
+      t0=gtod_timer();                      // run 10 samples to determine time for base_iter
+         for(i=0;i<base_iters;i++){ arg=i*factor; isum += sin(arg)*cos(arg); }
+         if(isum<-1.0e0) printf("%lf\n",isum);   // (if on isum) don't optimize  away myspin
       t1=gtod_timer();
       test_cost = t1-t0;
+   // printf("test1  : %lf %lf %lf\n",t0,t1,test_cost);
 
-      fsec = (float)sec - startup_cost - test_cost;
+      fsec = (float)sec  - test_cost;
 
       if(fsec < 0.0e0) return;   // Load will have to be the testing cost!
+				 //
+      iters = (long long int)(base_iters*fsec/test_cost);
 
-      sec_p_base = (t1-t0)/10.0e0;
+   // printf("ITERS=%ll  fsec=%f  test_cost %f\n",iters,fsec,test_cost);
 
-      iters = fsec/sec_p_base;
-
-//    if over 10K, use a base_iters of 1G (not 10M)
-      if(iters > 10000){
-         iters = iters/100;   // OK to be off by 1%
-         base_iters = base_iters * 100;
-      }
-
-
-   t0=gtod_timer();
-   for(i=0;i<iters;i++){
-      isum= myspin(base_iters+i);       // (+i)don't optimize away; %error is noise
-      if(isum==0) printf("%d\n",isum);   // (if on isum) don't optimize  away myspin
-   }
-   t1=gtod_timer();
-// printf("TOTAL %f\n", startup_cost+test_cost+t1-t0);
-
-}
-
-int myspin(int n){
-   long int i,sum=0;
-   for(i=0;i<n;i++){ sum += i ; }
-   return (int) sum;
+      for(i=0;i<iters;i++){ arg=i*factor; isum += sin(arg)*cos(arg); }  // @10 0.17
+      if(isum<-1.0e0) printf("%lf\n",isum);   // don't optimize  away myspin
 }
