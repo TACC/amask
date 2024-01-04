@@ -22,12 +22,18 @@ ifeq ($(TACC_SYSTEM),frontera)
    LOAD_X=-xCORE-AVX2 -axCORE-AVX512
 endif
 
-ifeq ($(TACC_SYSTEM),stampede)
-   LOAD_X=-xhost
+ifeq ($(TACC_SYSTEM),stampede3)
+   LOAD_X=-xCORE-AVX512
+   CC_SER  = icpx    -g
+   CC_MPI  = mpiicpx -g
+   CC_OMP  = icpx    -g -qopenmp
+   CC_HYB  = mpiicpx -g -qopenmp
+
+   LD_MPI  = mpiicpx -g
+   LD_OMP  = icpx    -g -qopenmp
+   LD_HYB  = mpiicpx -g -qopenmp 
 endif
-ifeq ($(TACC_SYSTEM),stampedeknl)
-   LOAD_X=-xMIC-AVX512
-endif
+
 ifeq ($(TACC_SYSTEM),ls5)
    LOAD_X=-xhost
 endif
