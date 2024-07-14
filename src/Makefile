@@ -1,29 +1,22 @@
 
+ifeq ($(PREFIX),)
+    PREFIX := ..
+endif
+
+
 OMP_OPTION=-fopenmp
 CC=icpc  
-MPICC=cxx #intel   CC=g++ GNU  CC=nv++ NVIDIA
+MPICC=cxx     #intel   CC=g++ GNU  CC=nv++ NVIDIA
 
-#ifeq ($(filter $(cond1) $(cond2),yes),)
-#https://stackoverflow.com/questions/26625323/using-ifeq-with-multiple-options
-#ifeq ($(x),$(filter $(x),4 6)) 
-#ifeq ($(TACC_SYSTEM),$(filter $(TACC_SYSTEM),frontera ls6))
-#endif
-    
-ifeq ($(TACC_SYSTEM),frontera)
+ifeq ($(TACC_SYSTEM),$(filter $(TACC_SYSTEM),frontera ls6))
    CC=icpc
    OMP_OPTION=-qopenmp
 endif
-
+    
 ifeq ($(TACC_SYSTEM),stampede3)
    CC=icpx
    OMP_OPTION=-qopenmp
 endif
-
-ifeq ($(TACC_SYSTEM),ls6)
-   CC=icpx
-   OMP_OPTION=-qopenmp
-endif
-
 
 ifeq ($(CHPC_HOST),lengau)
 CC=c++
@@ -141,10 +134,12 @@ print_mask.o  : print_mask.c
 
 
 .PHONY: install clean cleanall
-install:
-	mkdir -p -v ../bin ../lib
-	cp -p $(LIB)  ../lib
-	cp -p $(EXES) ../bin
+
+install :
+	mkdir -p -v             $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/doc
+	cp -p $(LIB)            $(PREFIX)/lib
+	cp -p $(EXES)           $(PREFIX)/bin
+	cp -pr ../documents/*   $(PREFIX)/doc
 
 clean :
 	echo EXES: $(EXES) 
@@ -155,8 +150,7 @@ clean :
 
 cleanall :
 	rm -fr $(EXES) $(DRIVER_OBJECTS) $(LIB_OBJECTS) $(LIB) *.mod
-	rm -fr $(addprefix ../bin/, $(EXES))  ../lib/$(LIB)
-	rmdir  ../bin/        ../lib/
+	rm -fr $(PREFIX)/bin  $(PREFIX)/lib $(PREFIX)/doc
 
 
 #http://stackoverflow.com/questions/15195087/how-to-make-static-library-in-makefile

@@ -1,0 +1,25 @@
+1.) get amask
+
+    git clone https://github.com/tacc/amask
+
+2.) Change to amask (the top-level directory)
+
+    cd amask
+
+3.) Edit src/Makefile to set OpenMP option and C++ compiler.
+    Change OMP_OPTION and CC compiler: 
+    openmp option (-qopenmp, -fopenmp, ...)
+    C++ compiler  (icpc, icpx, g++, nvc++, ...). 
+
+3.) We assume you have MPI, and MPICC=cxx is used to defines mpicxx (in src/Makefile)
+    If this is not the correct MPI wrapper,
+    define MPICC appropriately:  something like c++, CC, gxx, etc.
+
+4.) If you don't want amask installed in the default top-level directory, set PREFIX:
+
+    export PREFIX=<your install directory>     #for non-default location
+
+5.) In the top level directory (amask), execute:
+
+    make
+    make install
