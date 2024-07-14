@@ -4,7 +4,7 @@ The Fortran API is not ready yet.
 
 Amask was originally designed just to display the affinity (mask) of processes that
 are launched by an MPI executable launcher (mpirun, mpiexec, TACC ibrun, etc.).
-When amask is built, it created amask_mpi. This MPI executable 
+When maskeraid is built, it creates amask_mpi. This MPI executable 
 is then substituted for mpi application executable of the researcher in a test run
 to discover how the launcher would have distributed the application's tasks (ranks).
 In a job script, the user would simple replace the application executable name
@@ -18,6 +18,7 @@ shown below:
            ...
            #ibrun ./my_mpi_exec
             ibrun ./amask_mpi
+
 
 
 OUTPUT 1
@@ -40,38 +41,42 @@ rank |    0    |   10    |
 0015 ---------------5
 
 
-The load utility puts a load on the ranks for 5 seconds, so that htop/top can be
-run on a node to observe the core occupation.  (Execute "top", and then press the
-1 key to change the display to show the percentage load on each core.)  You can
-reset the load time with the -w option (-w #, integer # sets seconds to #).
+The whereami puts a load on the ranks for 10 seconds, so that top can be run on
+a node to observe the core occupation.  (Execute "top", and then press the
+1 key to change the display to show the percentage load on each core.  You can
+reset the load time by setting setting the MASKERAID_LOAD_SECONDS environment 
+variable to a positive integer (units are seconds).
 
-The resulting output for Stampede in Output 1. shows (kernel) masks rows labeled by the ranks
-of a amask_mpi MPI tasks for the above launch, with a single column representing a proc-ids 
-(here core numbers) bit (sequentially numbered from 0 to Nprocs-1, for MPI processes (ranks)
- 0 to ntasks-1, numbered in the first column of the matrix.  
+The resulting output for Stampede in Output 1. shows a matrix with rows labeled by the ranks
+of a amask_mpi MPI tasks for the above launch, the columns represent CPU_ids 
+(core id) with positions representing the the CPU_ids from 0 to ntasks-1, beginning 
+with the first column of the matrix.  
 
-A non-hyphen character in a row position means that the mpi rank (row value) is allowed 
-to execute in the corresponding proc-id (column value). 
-In the output above, rank 0 is "mapped" to only core (proc-id) 0, rank 1 is mapped only to
-core (proc-id) 1, etc., so as to have each rank execute on only one core (proc-id). 
+A non-hyphen character in the matrix means that 
+the mpi rank (row value) is allowed to execute in the CPU_id (column value). In the
+output below
+rank 0 is "mapped" to core (CPU_id) 0, rank 1 is mapped to
+core (CPU_id) 1, etc., so as to have each rank execute on only one core (CPU_id). 
 
-To make it easy to determine the proc-id value in the mask, the first digit of
-proc-id (core) number is printed as an index character.  For proc-ids larger than 9, the
+To make it easy to determine the CPU_id value in the matrix, the first digit of
+CPU_id (core) number is printed in the matrix.  For CPU_ids larger than 9, the
 The "10s" position value can be read from the column header demarking the set
-by bars (|).  For instance the second set of values {0, 1, 2, 3, 4, 5}  (those for 
-rank 10-15) along the diagonal represent proc-id's { 10, 11, 12, 13, 14, and 15}-- 
-the "10" in the header "|       10     |" should be added to the unit digits within 
-the mask to get the CPU_id value.
+by bars (|).  For instance the second set of values {0, 1, 2, 3, 4, 5} along the 
+diagonl represent CPU_id's { 10, 11, 12, 13, 14, and 15}-- the "10" in the header
+"|       10     |" should be added to the unit digits within the matrix to get the 
+CPU_id value.
+
+Put the output  HERE....
 
 ------------------------------------------------------------------------------------
 
 
-Performance might be improved by pinning each OpenMP thread to a single core.  This can
+Performance might be improved by pinning each OPenMP thread to a single core.  This can
 be done in several ways: 
    1.)  Masking commands for each thread can be inserted after
         the threads are generated in an OpenMP parallel region.
    2.)  KMP variables can be set for intel-compiled code with OpenMP directives.
-   3.)  The 4.0 OpenMP Affinity directives and environment variable can be
+   3.)  The 4.0 OpenMP Affinity directives and environmnet variable can be
         use to map threads to "places".
 
 In hybrid code is may be necessary to turn off MPI affinity settings when using OpenMP.
@@ -83,7 +88,7 @@ With the MVAPICH2 compiler, this is done the in the tacc_affinity scripts.
 
 Instrumenting Your Own Application.  FORTRAN IS NOT READY YET
 
-Important elements of Amask were turned into a library, so that users
+Important elements of Amask were turned into an library, so that users
 could instrument there own applications to display the masks of MPI tasks
 and OpenMP threads.  Instrumentation is simple, just add a single call to
 an MPI or OpenMP code after initialization or the parallel directive, respectively.
@@ -114,7 +119,7 @@ There are other utilities in the library:
 
 load_cpu_nsec( nsec )   --- Loads up a process/thread for nsec seconds (int operations)
 gtod_timer()            --- Easy to use Get Time of Day clock 
-map_to_procid(proc-id)  --- Sets process/thread map to a single core (proc-id).
+map_to_procid(proc_id)  --- Sets process/thread map to a single core (proc-id).
 
 See code for details.
 tsc()          -- Time Stamp Counter
