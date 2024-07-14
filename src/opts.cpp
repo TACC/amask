@@ -26,7 +26,7 @@ int Maskopts::my_cmdln_opts(){
 // w wait-time <int>; v view kernel|core;  p print-speed fast|slow; u usage no_arg
 // http://stackoverflow.com/questions/7489093/getopt-long-proper-way-to-use-it
 
-char c, c_arg; int long_index=0;
+char c, c_arg; int cint, long_index=0;
 
 // Options
 static struct option long_opts[] = {
@@ -39,8 +39,9 @@ static struct option long_opts[] = {
 
    argcnt = 0;
    v='0';//w='0';p='0';u='0';
-   while ((c = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
- 
+   //                    nvc++ rightfully wants getopt_long to return int. (But we need char.)
+   while ((cint = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
+      c=(char)cint; 
       switch (c) {
  
         case 'w':
