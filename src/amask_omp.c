@@ -34,11 +34,11 @@ int  map_to_procid( int icore);
 
 int main(int argc, char *argv[]){
 
-int nthrds, thrd, procid;  //Thread info
+int nthrds, thrd, procid;    //Thread info
 
-int nsec = 10;     // Load, default time
+int nsec = 5;                // Load, default time
 
-int ierr;          // Error number
+int ierr;                    // Error number
 
 // cmdln_get_nsec_or_help( &nsec, argc, argv); //optional, get nsec from cmd line
    Maskopts opts(argc,argv);
@@ -51,8 +51,8 @@ int ierr;          // Error number
    // procid  =   thrd;                      // set procid to thread number (thrd)
    // ierr   =   map_to_procid( procid );     // set your own affinity here 
 
-      amask_omp();        // Call mask reporter
-      load_cpu_nsec( nsec );    // Load up rank process so user can watch top.
+      amask_omp();           // Call mask reporter
+      load_cpu_nsec( nsec ); // Load up rank process so user can watch top.
    }
 
 }

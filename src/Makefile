@@ -1,12 +1,43 @@
-#
+
+OMP_OPTION=-fopenmp
+CC=icpc  
+MPICC=cxx #intel   CC=g++ GNU  CC=nv++ NVIDIA
+
+#ifeq ($(filter $(cond1) $(cond2),yes),)
+#https://stackoverflow.com/questions/26625323/using-ifeq-with-multiple-options
+#ifeq ($(x),$(filter $(x),4 6)) 
+#ifeq ($(TACC_SYSTEM),$(filter $(TACC_SYSTEM),frontera ls6))
+#endif
+    
+ifeq ($(TACC_SYSTEM),frontera)
+   CC=icpc
+   OMP_OPTION=-qopenmp
+endif
+
+ifeq ($(TACC_SYSTEM),stampede3)
+   CC=icpx
+   OMP_OPTION=-qopenmp
+endif
+
+ifeq ($(TACC_SYSTEM),ls6)
+   CC=icpx
+   OMP_OPTION=-qopenmp
+endif
+
+
+ifeq ($(CHPC_HOST),lengau)
+CC=c++
+endif
+
 # Intel Compilers (IMPI or MVAPICH2)
-CC_SER  =   icpc -g
-CC_MPI  = mpicxx -g
-CC_OMP  =   icpc -g -fopenmp
-CC_HYB  = mpicxx -g -fopenmp
-LD_MPI  = mpicxx -g
-LD_OMP  =   icpc -g -fopenmp
-LD_HYB  = mpicxx -g -fopenmp
+CC_SER  =    ${CC}
+CC_MPI  = mpi$(MPICC)
+CC_OMP  =    ${CC}    $(OMP_OPTION)
+CC_HYB  = mpi$(MPICC) $(OMP_OPTION)
+
+LD_MPI  = mpi$(MPICC)
+LD_OMP  =    ${CC}    $(OMP_OPTION)
+LD_HYB  = mpi$(MPICC)  $(OMP_OPTION)
 
 D_LSCPU=
 ifeq ($(shell lscpu >& /dev/null && echo 1 || echo 0), 1)
@@ -18,46 +49,16 @@ endif
 
 AR      = ar
 
-ifeq ($(TACC_SYSTEM),frontera)
-   LOAD_X=-xCORE-AVX2 -axCORE-AVX512
-endif
-
-ifeq ($(TACC_SYSTEM),stampede3)
-   LOAD_X=-xCORE-AVX512
-   CC_SER  = icpx    -g
-   CC_MPI  = mpiicpx -g
-   CC_OMP  = icpx    -g -qopenmp
-   CC_HYB  = mpiicpx -g -qopenmp
-
-   LD_MPI  = mpiicpx -g
-   LD_OMP  = icpx    -g -qopenmp
-   LD_HYB  = mpiicpx -g -qopenmp 
-endif
-
-ifeq ($(TACC_SYSTEM),ls5)
-   LOAD_X=-xhost
-endif
 ifeq ($(NERSC_HOST),cori)
-   LOAD_X=-xhost
+   OMP_OPTION=-qopenmp
+   CC_SER  = CC
+   CC_MPI  = CC
+   CC_OMP  = CC ${OMP_OPTION}
+   CC_HYB  = CC ${OMP_OPTION}
 
-   CC_SER  = CC -g
-   CC_MPI  = CC -g
-   CC_OMP  = CC -fopenmp -g
-   CC_HYB  = CC -fopenmp -g
-
-   LD_MPI  = CC -g
-   LD_OMP  = CC -fopenmp -g
-   LD_HYB  = CC -fopenmp -g
-endif
-
-ifeq ($(CHPC_HOST),lengau)
-CC_SER  =    c++ -g
-CC_MPI  = mpicxx -g
-CC_OMP  =    c++ -fopenmp -g
-CC_HYB  = mpicxx -fopenmp -g
-LD_MPI  = mpicxx -g
-LD_OMP  =    c++ -fopenmp -g
-LD_HYB  = mpicxx -fopenmp -g
+   LD_MPI  = CC 
+   LD_OMP  = CC -fopenmp
+   LD_HYB  = CC -fopenmp
 endif
 
 
@@ -121,7 +122,7 @@ hybrid_report_mask.o :  hybrid_report_mask.c
 
 
 load.o  : load.c
-	$(CC_SER) $(LOAD_X) -DCMASK_LOAD -O3  -c $< -o $@
+	$(CC_SER) $(LOAD_X) -DAMASK_LOAD -O3  -c $< -o $@
 
 boundto.o  : boundto.c
 	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@

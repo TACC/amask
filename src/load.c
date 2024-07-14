@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <unistd.h>
-#ifdef CMASK_LOAD
+#ifdef AMASK_LOAD
 #include "opts.h"
 #endif
 
@@ -50,7 +50,7 @@ double tt0,tt1;
 char digits[11] = { "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" };
 int  slen, knt = 0;
 
-#ifdef CMASK_LOAD
+#ifdef AMASK_LOAD
    Maskopts opts;
    if( opts.is_set_by_cmdline() ) sec = opts.get_w();
 #else

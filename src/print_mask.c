@@ -62,7 +62,7 @@ char * spaces;
 
 //    See FORTRAN INTERFACE at end
 
-  if( l != 'k') {
+  if( l != 's') {
       cores=ncpus/tpc;
   }
   else{
@@ -93,15 +93,18 @@ char * spaces;
 
     if( l == 's') {
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
-                                     printf("\n%sEach row of matrix is an affinity mask.\n",spaces);
-                                     printf("%sA set mask bit = matrix digit + column group # in |...|\n\n",spaces);
+                                     printf("\n%sEach row is a mask for a process/thread; each char represents a proc-id.\n",spaces);
+                                     printf("%sA digit means the proc-id \"bit\" is set & process can exec on the proc-id.\n",spaces);
+                                     printf("%sid = digit + column group # of header between the bars (e.g. |...20...|)\n\n",spaces);
                        }
     }
     else{
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
-                                     printf("\n%sEach row of matrix is a mask for a Hardware Thread (hwt).\n",spaces);
-                                     printf("%sCORE ID  = matrix digit + column group # in |...|\n",spaces);
-                                     printf("%sA set mask bit (proc-id) = core id + add %d to each additional row.\n\n",spaces, cores);
+                                     printf("\n%sEach row is a mask for a process/thread; each char represents a proc-id.\n",spaces);
+                                     printf("%sA digit means the proc-id \"bit\" is set & process can exec on the proc-id.\n",spaces);
+                                     printf("%sid = digit + column group # of header between the bars (e.g. |...20...|)\n",spaces);
+                                     printf("%sFor multiple HW threads: add %d to each additional unlabeled row.\n",spaces,cores);
+                                     printf("%sUse -vs to generate a single row for each process.\n\n",spaces);
                        }
  
     }

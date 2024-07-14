@@ -53,9 +53,9 @@ int i,j;                  // General
 
 int rank, nranks;         // MPI variables.
 
-int nsec = 10;            // Default time for load
+int nsec = 5;             // Default time for load
 
-int procid;                // For mapping this process to procid in this variabl
+int procid;               // For mapping this process to procid in this variabl
 
 int  p;                   // Options
 char l;
@@ -71,12 +71,12 @@ char l;
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
    // procid=rank;                     // set rank to procid
-   // map_to_procid( procid );          // set your own affinity here 
-                                      // (e.g. map this process to procid equal to this rank.
+   // map_to_procid( procid );         // set your own affinity here 
+                                       // (e.g. map this process to procid equal to this rank.
 
-   amask_mpi();                 // Call mask reporter
+   amask_mpi();                        // Call mask reporter
 
-   load_cpu_nsec( nsec );             // Load up rank process so user can watch top.
+   load_cpu_nsec( nsec );              // Load up rank process so user can watch top.
 
 
    MPI_Finalize();

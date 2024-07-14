@@ -2,7 +2,7 @@
 
 // static var defaults must be set outside class (until C++11)
 int  Maskopts::w=0;
-char Maskopts::v='c', Maskopts::p='s', Maskopts::u='-';
+char Maskopts::v='s', Maskopts::p='f', Maskopts::u='-';
 bool Maskopts::setbycmdline=false;
 
 
@@ -38,7 +38,7 @@ static struct option long_opts[] = {
                                    };
 
    argcnt = 0;
-   v='0';//w='0';p='0';u='0';
+   v='s';//w='0';p='f';u='0';
    //                    nvc++ rightfully wants getopt_long to return int. (But we need char.)
    while ((cint = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
       c=(char)cint; 
@@ -50,8 +50,8 @@ static struct option long_opts[] = {
                 break;  
         case 'v':
                 c_arg=optarg[0];
-                if(c_arg != 'c' && c_arg != 'k'){ print_usage_cmdln('v'); }
-                if(c_arg == 'c' || c_arg == 'k'){ v=c_arg; }
+                if(c_arg != 's' && c_arg != 'm'){ print_usage_cmdln('v'); }
+                if(c_arg == 's' || c_arg == 'm'){ v=c_arg; }
                 argcnt++;  
                 break;  
         case 'p':
@@ -83,8 +83,8 @@ int Maskopts::my_env_opts(){
 char c;
 const char * env_p;
 
-string env_vars[] = { "CMASK_WAITSECS",   "CMASK_LISTBY",
-                      "CMASK_PRINTSPEED", "CMASK_USAGE"      };
+string env_vars[] = { "AMASK_WAITSECS",   "AMASK_LISTBY",
+                      "AMASK_PRINTSPEED", "AMASK_USAGE"      };
 
    argcnt=0;
 
@@ -94,15 +94,15 @@ string env_vars[] = { "CMASK_WAITSECS",   "CMASK_LISTBY",
    env_p = std::getenv( env_vars[1].c_str() );
    if ( env_p != 0 )            { c = env_p[0];    argcnt++;
 
-      if( c != 'c' && c != 'k') { print_usage_env("CMASK_VIEW");  }
-      if( c == 'c' || c == 'k') { v=c; }
+      if( c != 's' && c != 'm') { print_usage_env("AMASK_VIEW");  }
+      if( c == 's' || c == 'm') { v=c; }
 
    }
 
    env_p = std::getenv( env_vars[2].c_str() );
    if ( env_p != 0 )            { c = env_p[0];    argcnt++;
 
-      if( c != 'f' && c != 's') { print_usage_env("CMASK_PRINTSPEED");  }
+      if( c != 'f' && c != 's') { print_usage_env("AMASK_PRINTSPEED");  }
       if( c == 'f' || c == 's') { p=c; }
    }
 
@@ -115,11 +115,11 @@ string env_vars[] = { "CMASK_WAITSECS",   "CMASK_LISTBY",
 
 void Maskopts::print_usage_cmdln(char c_err) {
    printf("NOTICE: -ls and -lc options are now -vk and -vc, respectively. (Kernel and Core Views)\n"); 
-   printf("Usage: amask_mpi|omp|hybrid|serial [-w|-waitsecs #] [-v|-view k|c] [-p|-printspeed f|s] [-u|-usage]\n"); 
+   printf("Usage: amask_mpi|omp|hybrid|serial [-w|-waitsecs #] [-v|-view s|m] [-p|-printspeed f|s] [-u|-usage]\n"); 
    if(c_err!='u') printf("       Problem with %c option.\n", c_err ); 
 } 
 
 void Maskopts::print_usage_env(const char *c_err) {
-   printf("Usage: CMASK_WAITSECS=<int>(sec) CMASK_VIEW=kernel|core CMASK_PRINTSPEED=fast|slow CMASK_USAGE=u \n"); 
+   printf("Usage: AMASK_WAITSECS=<int>(sec) AMASK_VIEW=s|m (single/multi line) AMASK_PRINTSPEED= f|s (fast/slow) AMASK_USAGE=u \n"); 
    if(c_err != NULL) printf("       Problem with %s option.\n", c_err ); 
 } 

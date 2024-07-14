@@ -45,23 +45,23 @@ void amask_mpi(void);
 
 
 int main(int argc, char **argv){
-int rank, nranks;         // MPI variables.
+int rank, nranks;          // MPI variables.
 int nthrds, thrd, procid;  //Thread info
 int requested=MPI_THREAD_MULTIPLE, provided;
 
-int nsec = 10;     // Load, default time
+int nsec = 5;              // Load, default time
 
-int ierr;          // Error number
+int ierr;                  // Error number
 
 // cmdln_get_nsec_or_help( &nsec, argc, argv); //optional, get nsec from cmd line
    Maskopts opts(argc,argv);
 
-                  // thread safe init replaces MPI_Init(&argc, &argv);
+                           // thread safe init replaces MPI_Init(&argc, &argv);
    MPI_Init_thread(&argc, &argv, requested, &provided);  
    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-   amask_mpi();   // Report JUST MPI process masks
+   amask_mpi();            // Report JUST MPI process masks
 
    #pragma omp parallel private(thrd,nthrds,ierr)
    {
@@ -69,9 +69,9 @@ int ierr;          // Error number
       nthrds =   omp_get_num_threads();
 
   //  procid  =   thrd;                     // set procid to thread number (thrd)
-  //  ierr   =   map_to_procid( procid );    // set your own affinity here 
+  //  ierr   =   map_to_procid( procid );   // set your own affinity here 
 
-      amask_hybrid();        // Call mask reporter
+      amask_hybrid();                       // Call mask reporter
 
       load_cpu_nsec( nsec );       // Load up rank process so user can watch top.
 
