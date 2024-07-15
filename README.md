@@ -83,23 +83,35 @@ rank |    0    |   10    |
 ### Features
 Use the wait option (-w #) to have the amask executable maintain a load on the processors for # seconds.  When used in with `htop`, this can be a visual check on the position of the process/thread execution.  Also, the view option (-v m) can be used with cores configurations with hyperthreading (multiple hardware threads/core) to observe the mask from a core perspective, as shown here.
 
-On this system, there are 2 sockets, each with 28 cores (56 total) and each core is hyperthreaded, making 112 proc-ids. The proc-ids are numbered seqentially on each socket: even numbers on socket 0 (0,2,4,...,54) and odd numbers on socket 1 (1,2,3,...,55).  On each core there are 2 Hardware (HW) threads.  The first HW threads on each core are assigned the usual proc-id with out hyperthreading.  So that on socket 0, the proc-ids (for HW1) are {0,2,4,...,54} and {1,3,5,...,55} for socket 0 and 1, respectively.  The 2nd HW thread are assigned by adding 56 to the non-hyperthreaded proc-id, forming the sequence {56,58,60,...,126} and {57,59,61,...,127}, respectively. With OMP_PROC_BIND=close, the affinity mask allows a thread to occupy either HW1 or HW2.  The first display shows row possible occupations of  {0,56}, {2,58}, {4,60} for threads 0, 1, and 2.  The second display (with -v m) shows the columns as essentially core numbers, with HW threads {0,0+56}, {2,2+56}, and {4,4+56}, respectively (as two rows with with == and -- lines).
+Assume a system consists of 2 sockets, each with 28 cores (56 total) and each core is hyperthreaded, making 112 proc-ids. The proc-ids are numbered seqentially on each socket: even numbers on socket 0 (0,2,4,...,54) and odd numbers on socket 1 (1,2,3,...,55).  On each core there are 2 Hardware (HW) threads.  The first HW threads on each core are assigned the usual proc-id with out hyperthreading.  So that on socket 0, the proc-ids (for HW1) are {0,2,4,...,54}, and {1,3,5,...,55} for socket 1.  The 2nd HW thread are assigned by adding 56 to the non-hyperthreaded proc-id, forming the sequence {56,58,60,...,126} and {57,59,61,...,127}, respectively. 
+
+The first display below shows possible occupations of {0,56}, {2,58}, {4,60} for threads 0, 1, and 2 (using -vs to display a single row for the mask).  The second display (the default for hyperthreading, -vm for multiple lines for a mask) shows the columns as essentially core numbers, with HW threads {0,0+56}, {2,2+56}, and {4,4+56}, respectively (as two rows with with == and -- lines).  The latter display (default) is much easier evaluate same-core bit settings.  (With OMP_PROC_BIND=close, the affinity mask below allows a thread to occupy either HW1 or HW2.)
+
 
 ```shell
 $ export OMP_NUM_THREADS=2 OMP_PROC_BIND=close
-$ amask_omp
+$ amask_omp -vs
+
      Each row is a mask for a process/thread; each char represents a proc-id.
-     A digit means the proc-id "bit" is set & process can exec on the proc-id.
+     A digit means the mask bit is set & process can exec on the proc-id.
      id = digit + column group # of header between the bars (e.g. |...20...|)
+
+      *** Use -vm to generate separate row for each hardware thread.
 
 thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60 ... 110  |
 0000 0-------------------------------------------------------6----------...--------
 0001 --2-------------------------------------------------------8--------...--------
 0002 ----4-------------------------------------------------------0------...--------
 
-$ amask_omp -v m
-     For multiple HW threads: add 56 to each additional row (with "="'s).
-     Use -vs to generate a single row for each process.
+$ export OMP_NUM_THREADS=2 OMP_PROC_BIND=close
+$ amask_omp 
+
+     Hyperthreading detected: Use -vs to generate a single row for each process.
+
+     Each row is a mask for a process/thread; each char represents a proc-id.
+     A digit means the mask bit is set & process can exec on the proc-id.
+     id = digit + column group # of header between the bars (e.g. |...20...|)
+     For multiple HW threads: add 56 to each additional unlabeled row.
 
 thrd |    0    |   10    |   20    |   30    |   40    |   50    |
 0000 0=======================================================

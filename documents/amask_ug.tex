@@ -15,7 +15,7 @@
 \graphicspath{ {images/} }
 % inserting images: https://www.sharelatex.com/learn/Inserting_Images
 
-\renewcommand{\arraystretch}{1.0} % Extra space in tables
+\renewcommand{\arraystretch}{1.1} % Extra space in tables
 \parindent0mm                     % New paragraphs start without indentation
 \setlength{\parskip}{1em}         % And with a blank line in between
 
@@ -95,10 +95,10 @@
 \verb+ +
 \vspace{1em}
 \begin{flushright}
-\huge\bf amask v1.0\\
+\huge\bf amask v1.1\\
 \rule{\textwidth}{4pt}
 \large{\bf AMASK: Affinity MASKs for parallel processes/threads\\
-Document Revision 1.0\\
+Document Revision 1.1\\
 \today}
 \end{flushright}
 \vfill
@@ -120,7 +120,7 @@ Texas Advanced Computing Center\\
 The University of Texas at Austin\\
 %\vspace{1cm}
 \vspace{0.5em}
-Copyright 2017 The University of Texas at Austin.
+Copyright 2024 The University of Texas at Austin.
 \end{flushleft}
 %\newpage
 \end{titlepage}
@@ -178,7 +178,7 @@ You can also clone the git repository:
 
 This will create a top level directory called \verb+amask+, with subdirectories 
 \verb+docs+ and \verb+src+.  Change directory to  \verb+amask+. Edit the \verb+Makefile+ to include an appropriate
-MPI compiler and OpenMP flag (the defaults are for Intel).  Execute \verb+make+.
+MPI compiler and OpenMP flag (the defaults are for Intel). See INSTALL instructions.  Execute \verb+make+.
 
 %edit \verb+install.sh+ to reflect your choice for the installation directory. The variables to modify are:
 
@@ -361,62 +361,47 @@ rank |   0     |   10    |
 
 \end{code}
 
-A more challenging situation is the determination of the masks on a system with 
-hundreds of hardware threads, such as the Intel KNL processor.  At TACC, Stampede2 
-has 4,200 PHI 7250 processors (KNLs), each with 272 hardware threads (68 cores x 
-4 SMT threads/core).  Before version 1.0  amask would display rows of 272 proc-ids 
-(processor ids=hardware threads), but that became a bit unwieldy for users to 
-display on laptops.  Now, by default, a matrix of core-ids versus process-ids is displayed.
-If there are n SMT-threads/core, there will be n rows for each process (rank/thread-id) listed (on the left).
-For the KNL described above there will be 4 rows displayed for each process 
-(corresponding to  proc-id {0-67}, {68-135}, {136-203}, and {204-272}) with the header displaying core-ids.  
+Assume a system consists of 2 sockets, each with 28 cores (56 total) and each core is hyperthreaded, making 112 proc-ids. The proc-ids are numbered seqentially on each socket: even numbers on socket 0 (0,2,4,...,54) and odd numbers on socket 1 (1,2,3,...,55).  On each core there are 2 Hardware (HW) threads.  The first HW threads on each core are assigned the usual proc-id with out hyperthreading.  So that on socket 0, the proc-ids (for HW1) are {0,2,4,...,54}, and {1,3,5,...,55} for socket 1.  The 2nd HW thread are assigned by adding 56 to the non-hyperthreaded proc-id, forming the sequence {56,58,60,...,126} and {57,59,61,...,127}, respectively. 
+
+The first display below shows possible occupations of {0,56}, {2,58}, {4,60} for threads 0, 1, and 2 (using -vs to display a single row for the mask).  The second display (the default for hyperthreading, -vm for multiple lines for a mask) shows the columns as essentially core numbers, with HW threads {0,0+56}, {2,2+56}, and {4,4+56}, respectively (as two rows with with == and -- lines).  The latter display (default) is much easier evaluate same-core bit settings.  (With OMP\_PROC\_BIND=close, the affinity mask below allows a thread to occupy either HW1 or HW2.)
 This is shown in Listing \ref{amasktaccknl}.
 
 %\begin{code}[frame=single,breaklines=true,numbers=left,language=C,caption=Process masks for 16 MPI task execution on 68-core KNL\label{amasktaccknl}]
 
 \begin{smallercode}[frame=single,breaklines=true,numbers=left,language=C,caption=Process masks for an 8-thread execution on 68-core KNL\label{amasktaccknl}]
 
-$ export OMP_NUM_THREADS=8
-$ export OMP_PROC_BIND=close
-$ ./amask_omp
+$ export OMP_NUM_THREADS=3 OMP_PROC_BIND=close
+$ amask_omp -vs
 
-     Each row of matrix is a mask for a Hardware Thread (hwt).
-     CORE ID  = matrix digit + column group # in |...|
-     A set mask bit (proc-id) = core-id + add 68 to each additional row.
+     Each row is a mask for a process/thread; each char represents a proc-id.
+     A digit means the mask bit is set & process can exec on the proc-id.
+     id = digit + column group # of header between the bars (e.g. |...20...|)
 
-thrd |    0    |   10    |   20    |   30    |   40    |   50    |   60    |
-0000 0===================================================================
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-0001 ====================================================================
-     0-------------------------------------------------------------------
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-0002 ====================================================================
-     --------------------------------------------------------------------
-     0-------------------------------------------------------------------
-     --------------------------------------------------------------------
-0003 ====================================================================
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-     0-------------------------------------------------------------------
-0004 =1==================================================================
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-0005 ====================================================================
-     -1------------------------------------------------------------------
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-0006 ====================================================================
-     --------------------------------------------------------------------
-     -1------------------------------------------------------------------
-     --------------------------------------------------------------------
-0007 ====================================================================
-     --------------------------------------------------------------------
-     --------------------------------------------------------------------
-     -1------------------------------------------------------------------
+      *** Use -vm to generate separate row for each hardware thread.
+
+thrd |    0    |   10    |   20    |   30    |   40    |   50    |  60...110 |
+0000 0-------------------------------------------------------6--------...------
+0001 --2-------------------------------------------------------8------...------
+0002 ----4-------------------------------------------------------0----...------
+
+$ export OMP_NUM_THREADS=3 OMP_PROC_BIND=close
+$ amask_omp
+
+     Hyperthreading detected: Use -vs to generate a single row for each process
+
+     Each row is a mask for a process/thread; each char represents a proc-id.
+     A digit means the mask bit is set & process can exec on the proc-id.
+     id = digit + column group # of header between the bars (e.g. |...20...|)
+     For multiple HW threads: add 56 to each additional unlabeled row.
+
+thrd |    0    |   10    |   20    |   30    |   40    |   50    |   
+0000 0=======================================================
+     0-------------------------------------------------------
+0001 ==2=====================================================
+     --2-----------------------------------------------------
+0002 ====4===================================================
+     ----4---------------------------------------------------
+````
 
 \end{smallercode}
 
@@ -476,12 +461,12 @@ and OpenMP threads.
 \begin{tabular}{|l|l|l|l|l|}
 \hline
 %\toprule
-Purpose                  & option & args & long option  & long args   \\ \hline
+Purpose                  & option & args & long option  & long args        \\ \hline
 %\midrule
-View                     & -v     & k|c  & --view       & kernel|core \\ \hline
-Print speed              & -p     & f|s  & --printspeed & fast|slow   \\ \hline
-Wait secs (process load) & -w     & \#   & --waitsecs   & \#          \\ \hline
-help                     & -h     &      & --help       &             \\ \hline
+View                     & -v     & s|m  & --view       & single|multiline \\ \hline
+Print speed              & -p     & f|s  & --printspeed & fast|slow        \\ \hline
+Wait secs (process load) & -w     & \#   & --waitsecs   & \#               \\ \hline
+help                     & -h     &      & --help       &                  \\ \hline
 %\bottomrule
 \end{tabular}
 \end{table}
