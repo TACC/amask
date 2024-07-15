@@ -3,24 +3,23 @@
   ml amask
   
 # OMP TEST
-                                     export OMP_NUM_THREADS=4 OMP_PROC_BIND=TRUE
-  [[ $TACC_SYSTEM == frontera  ]] && export OMP_NUM_THREADS=7 OMP_PROC_BIND=TRUE
-  [[ $TACC_SYSTEM == ls6       ]] && export OMP_NUM_THREADS=7 OMP_PROC_BIND=TRUE
-  [[ $TACC_SYSTEM == vista     ]] && export OMP_NUM_THREADS=7 OMP_PROC_BIND=TRUE
-  [[ $TACC_SYSTEM == stampede3 ]] && export OMP_NUM_THREADS=7 OMP_PROC_BIND=TRUE
+  echo "       OMP TEST"
+                                     CMD=mpirun 
+                                     export OMP_NUM_THREADS=8 NRANKS=2  OMP_PROC_BIND=TRUE CMD=ibrun
+  [[ $TACC_SYSTEM == frontera  ]] && export OMP_NUM_THREADS=8 NRANKS=7  OMP_PROC_BIND=TRUE CMD=ibrun
+  [[ $TACC_SYSTEM == stampede3 ]] && export OMP_NUM_THREADS=8 NRANKS=12 OMP_PROC_BIND=TRUE CMD=ibrun
+  [[ $TACC_SYSTEM == ls6       ]] && export OMP_NUM_THREADS=8 NRANKS=16 OMP_PROC_BIND=TRUE CMD=ibrun
+  [[ $TACC_SYSTEM == vista     ]] && export OMP_NUM_THREADS=8 NRANKS=18 OMP_PROC_BIND=TRUE CMD=ibrun
   
   amask_omp
   
 # MPI TEST
-                                     CMD=mpirun NRANKS=8
-  [[ $TACC_SYSTEM == frontera  ]] && CMD=ibrun  NRANKS=8
+  echo "       MPI TEST"
   
   $CMD -np $NRANKS amask_mpi
   
   
 # HYBRID TEST
+  echo "       HYBRID TEST"
 
-                                     CMD=mpirun NRANKS=8
-  [[ $TACC_SYSTEM == frontera  ]] && CMD=ibrun  NRANKS=8
-  
   $CMD -np $NRANKS amask_hybrid
