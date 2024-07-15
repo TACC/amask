@@ -21,7 +21,8 @@ opts.cpp
 opts.h
 print_mask.c
 timers.c
-dodiff
+dodiff.sh
+../test.sh
 ../README
 ../README.md
 ../Makefile
