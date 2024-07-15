@@ -7,6 +7,7 @@ endif
 OMP_OPTION=-fopenmp
 CC=icpc  
 MPICC=cxx     #intel   CC=g++ GNU  CC=nv++ NVIDIA
+DIAG_OFF=
 
 ifeq ($(TACC_SYSTEM),$(filter $(TACC_SYSTEM),frontera ls6))
    CC=icpc
@@ -16,6 +17,13 @@ endif
 ifeq ($(TACC_SYSTEM),stampede3)
    CC=icpx
    OMP_OPTION=-qopenmp
+endif
+
+ifeq ($(TACC_SYSTEM),vista)
+   CC=nvc++
+   OMP_OPTION=-fopenmp
+#   DIAG_OFF=--diag_suppress declared_but_not_referenced
+    DIAG_OFF=--diag_suppress declared_but_not_referenced,set_but_not_used
 endif
 
 ifeq ($(CHPC_HOST),lengau)
@@ -79,16 +87,16 @@ EXES	= $(DRIVER_SOURCES:.c=)
 
 all: $(EXES)
 
-amask_mpi    :            amask_mpi.o                       $(LIB)
-	$(LD_MPI) $(LDFLAGS_MPI)  amask_mpi.o    -o amask_mpi    $(LIB)
+amask_mpi    :            amask_mpi.o $(LIB)
+	$(LD_MPI) $(LDFLAGS_MPI)  amask_mpi.o    -o amask_mpi   $(LIB) $(DIAG_OFF)
 	mkdir -p ../bin
 	cp -p  amask_mpi ../bin
-amask_omp    :            amask_omp.o                       $(LIB)
-	$(LD_OMP) $(LDFLAGS_OMP)  amask_omp.o    -o amask_omp    $(LIB)
+amask_omp    :            amask_omp.o $(LIB)
+	$(LD_OMP) $(LDFLAGS_OMP)  amask_omp.o    -o amask_omp   $(LIB) $(DIAG_OFF)
 	mkdir -p ../bin
 	cp -p  amask_omp ../bin
-amask_hybrid :            amask_hybrid.o                    $(LIB)
-	$(LD_HYB) $(LDFLAGS_HYB)  amask_hybrid.o -o amask_hybrid $(LIB)
+amask_hybrid :            amask_hybrid.o $(LIB)
+	$(LD_HYB) $(LDFLAGS_HYB)  amask_hybrid.o -o amask_hybrid $(LIB) $(DIAG_OFF)
 	mkdir -p ../bin
 	cp -p  amask_hybrid ../bin
 
@@ -99,38 +107,38 @@ $(LIB) : $(LIB_OBJECTS)
 	cp -p $(LIB) ../lib
 
 amask_mpi.o    : amask_mpi.c 
-	$(CC_MPI) $(CFLAGS) -c $< -o $@
+	$(CC_MPI) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 mpi_report_mask.o : mpi_report_mask.c
-	$(CC_MPI) $(CFLAGS) -c $< -o $@
+	$(CC_MPI) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 
 amask_omp.o    :  amask_omp.c
-	$(CC_OMP) $(CFLAGS) -c $< -o $@
+	$(CC_OMP) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 omp_report_mask.o :  omp_report_mask.c
-	$(CC_OMP) $(CFLAGS) -c $< -o $@
+	$(CC_OMP) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 
 amask_hybrid.o    :  amask_hybrid.c
-	$(CC_HYB) $(CFLAGS) -c $< -o $@
+	$(CC_HYB) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 hybrid_report_mask.o :  hybrid_report_mask.c
-	$(CC_HYB) $(CFLAGS) -c $< -o $@
+	$(CC_HYB) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 
 
 load.o  : load.c
-	$(CC_SER) $(LOAD_X) -DAMASK_LOAD -O3  -c $< -o $@
+	$(CC_SER) $(LOAD_X) -DAMASK_LOAD -O3  -c $< -o $@ $(DIAG_OFF)
 
 boundto.o  : boundto.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
+	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@ $(DIAG_OFF)
 map_to_procid.o  : map_to_procid.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
+	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@ $(DIAG_OFF)
 timers.o  : timers.c
-	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@
+	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@ $(DIAG_OFF)
 opts.o  : opts.cpp
-	$(CC_SER)                 -c $< -o $@
+	$(CC_SER)                 -c $< -o $@ $(DIAG_OFF)
 print_mask.o  : print_mask.c
-	$(CC_SER) $(D_LSCPU) -std=c++11 -c $< -o $@
+	$(CC_SER) $(D_LSCPU) -std=c++11 -c $< -o $@ $(DIAG_OFF)
 
 
 %.o : %.c
-	$(CC_SER) $(CFLAGS) -c $< -o $@
+	$(CC_SER) $(CFLAGS) -c $< -o $@ $(DIAG_OFF)
 
 
 .PHONY: install clean cleanall

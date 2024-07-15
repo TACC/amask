@@ -76,7 +76,7 @@ double gtod_timer_()
    return sec + 1.0E-06*(double)tv.tv_usec;
 }
 
-
+#ifdef TSC
 static __inline unsigned long long tsc(void){
   unsigned long a, d;
   unsigned long long d2;
@@ -89,3 +89,4 @@ static __inline unsigned long long tsc(void){
 
 unsigned long long   tsc_timer(void){ return  tsc(); }
 unsigned long long  tsc_timer_(void){ return  tsc(); }
+#endif

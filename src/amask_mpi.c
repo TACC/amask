@@ -49,16 +49,12 @@ int           map_to_procid(int procid);          // set your own affinity here
 
 int main(int argc, char **argv){
 
-int i,j;                  // General
-
 int rank, nranks;         // MPI variables.
 
 int nsec = 5;             // Default time for load
 
-int procid;               // For mapping this process to procid in this variabl
+//int procid;             // For mapping this process to procid in this variabl
 
-int  p;                   // Options
-char l;
 
    Maskopts opts(argc,argv);
 
