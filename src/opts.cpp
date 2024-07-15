@@ -38,7 +38,7 @@ static struct option long_opts[] = {
                                    };
 
    argcnt = 0;
-   v='s';//w='0';p='f';u='0';
+   v='0';//w='0';p='f';u='0';   // use v='s' to make single row the default.
    //                    nvc++ rightfully wants getopt_long to return int. (But we need char.)
    while ((cint = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
       c=(char)cint; 

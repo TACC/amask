@@ -62,6 +62,7 @@ char * spaces;
 
 //    See FORTRAN INTERFACE at end
 
+  int hyper = (tpc>1) ? 1 : 0;
   if( l != 's') {
       cores=ncpus/tpc;
   }
@@ -94,28 +95,29 @@ char * spaces;
     if( l == 's') {
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
                                      printf("\n%sEach row is a mask for a process/thread; each char represents a proc-id.\n",spaces);
-                                     printf("%sA digit means the proc-id \"bit\" is set & process can exec on the proc-id.\n",spaces);
+                                     printf("%sA digit means the mask bit is set & process can exec on the proc-id.\n",spaces);
                                      printf("%sid = digit + column group # of header between the bars (e.g. |...20...|)\n\n",spaces);
+                            if(hyper)printf("%s *** Use -vm to generate separate row for each hardware thread.\n\n",spaces);
                        }
     }
     else{
        if(hd_prnt == 1){             //spaces:  5 for rank/thrd and 10 for rank thrd
+                                     printf("\n%sHyperthreading detected: Use -vs to generate a single row for each process.\n",spaces);
                                      printf("\n%sEach row is a mask for a process/thread; each char represents a proc-id.\n",spaces);
-                                     printf("%sA digit means the proc-id \"bit\" is set & process can exec on the proc-id.\n",spaces);
+                                     printf("%sA digit means the mask bit is set & process can exec on the proc-id.\n",spaces);
                                      printf("%sid = digit + column group # of header between the bars (e.g. |...20...|)\n",spaces);
-                                     printf("%sFor multiple HW threads: add %d to each additional unlabeled row.\n",spaces,cores);
-                                     printf("%sUse -vs to generate a single row for each process.\n\n",spaces);
+                                     printf("%sFor multiple HW threads: add %d to each additional unlabeled row.\n\n",spaces,cores);
                        }
  
     }
 
-  //if(multi_node){               printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
-    if(multi_node){               printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
+  //if(multi_node){                  printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
+    if(multi_node){                  printf(" %20s",node_header); wrap_cont += 20; } // Multi-node
 
-    if(nranks == 1 &&  nthrds == 1 ){ printf(" ");          wrap_cont += 1;  spaces=space_1; }         // serial
-    if(nranks != 1 &&  nthrds == 1 ){ printf("rank ");      wrap_cont += 5;  spaces=space_5; }         // mpi only
-    if(nranks == 1 &&  nthrds != 1 ){ printf("thrd ");      wrap_cont += 5;  spaces=space_5;}         // threads only
-    if(nranks != 1 &&  nthrds != 1 ){ printf("rank thrd "); wrap_cont += 10; spaces=space_5;}         // hybrid
+    if(nranks == 1 &&  nthrds == 1 ){printf(" ");          wrap_cont += 1;  spaces=space_1;}         // serial
+    if(nranks != 1 &&  nthrds == 1 ){printf("rank ");      wrap_cont += 5;  spaces=space_5;}         // mpi only
+    if(nranks == 1 &&  nthrds != 1 ){printf("thrd ");      wrap_cont += 5;  spaces=space_5;}         // threads only
+    if(nranks != 1 &&  nthrds != 1 ){printf("rank thrd "); wrap_cont += 10; spaces=space_5;}         // hybrid
 
 
 //                              HEADER (Groups of 10's)
