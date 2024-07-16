@@ -44,6 +44,12 @@ basic examples of using amask:
       $ mpirun -np 4 mpi_omp_app   # not necessary to run app
 
 ```
+Options:
+```shell
+Usage: amask_mpi|omp|hybrid [-w|-waitsecs #] [-v|-view s|m] [-p|-printspeed f|s] [-h|-help]  
+                    Wait loads processes for # sec. View uses single/multiple lines for mask.
+                    Printspeed fast (immediate) or slow 0.3sec delay. Help prints this usage.
+```
 
 ### Understanding the output
 

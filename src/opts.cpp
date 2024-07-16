@@ -2,7 +2,7 @@
 
 // static var defaults must be set outside class (until C++11)
 int  Maskopts::w=0;
-char Maskopts::v='s', Maskopts::p='f', Maskopts::u='-';
+char Maskopts::v='s', Maskopts::p='f', Maskopts::h='-';
 bool Maskopts::setbycmdline=false;
 
 
@@ -33,17 +33,17 @@ static struct option long_opts[] = {
                                      {"waitsecs",   required_argument, 0,  'w' },
                                      {"view",       required_argument, 0,  'v' },
                                      {"printspeed", required_argument, 0,  'p' },
-                                     {"usage",      no_argument,       0,  'u' },
+                                     {"help",       no_argument,       0,  'h' },
                                      {0,            0,                 0,   0  }
                                    };
 
    argcnt = 0;
-   v='0';//w='0';p='f';u='0';   // use v='s' to make single row the default.
+   v='0';//w='0';p='f';h='-';   // use v='s' to make single row the default.
    //                    nvc++ rightfully wants getopt_long to return int. (But we need char.)
-   while ((cint = getopt_long(argc, argv, "w:v:p:u", long_opts, &long_index)) != -1) {
+   while ((cint = getopt_long(argc, argv, "w:v:p:h", long_opts, &long_index)) != -1) {
       c=(char)cint; 
       switch (c) {
- 
+printf(" switch, c=%c\n",c); 
         case 'w':
                 w=atoi(optarg);
                 argcnt++;  
@@ -60,10 +60,10 @@ static struct option long_opts[] = {
                 if(c_arg == 'f' || c_arg == 's'){ p=c_arg; }
                 argcnt++;  
                 break;  
-        case 'u':
-                u='u';
+        case 'h':
+                h='h';
                 argcnt++;
-                print_usage_cmdln('u'); exit(0);
+                print_usage_cmdln('h'); exit(0);
         case '?':
                 print_usage_cmdln('?');
 
@@ -83,8 +83,7 @@ int Maskopts::my_env_opts(){
 char c;
 const char * env_p;
 
-string env_vars[] = { "AMASK_WAITSECS",   "AMASK_LISTBY",
-                      "AMASK_PRINTSPEED", "AMASK_USAGE"      };
+string env_vars[] = { "AMASK_WAITSECS", "AMASK_LISTBY", "AMASK_PRINTSPEED"};
 
    argcnt=0;
 
@@ -106,20 +105,17 @@ string env_vars[] = { "AMASK_WAITSECS",   "AMASK_LISTBY",
       if( c == 'f' || c == 's') { p=c; }
    }
 
-   env_p = std::getenv( env_vars[3].c_str() );
-   if ( env_p != 0 )           { u = 'u';          argcnt++;  
-                                 print_usage_env(NULL); exit(0);  }
-
    return argcnt;
 }
 
 void Maskopts::print_usage_cmdln(char c_err) {
-   printf("NOTICE: -ls and -lc options are now -vk and -vc, respectively. (Kernel and Core Views)\n"); 
-   printf("Usage: amask_mpi|omp|hybrid|serial [-w|-waitsecs #] [-v|-view s|m] [-p|-printspeed f|s] [-u|-usage]\n"); 
-   if(c_err!='u') printf("       Problem with %c option.\n", c_err ); 
+   printf("Usage: amask_mpi|omp|hybrid [-w|-waitsecs #] [-v|-view s|m] [-p|-printspeed f|s] [-h|-help]  \n"); 
+   printf("                    Wait loads processes for # sec. View uses single/multiple lines for mask.\n"); 
+   printf("                    Printspeed fast (immediate) or slow 0.3sec delay. Help prints this usage.\n"); 
+   if(c_err!='h') exit(1); // printf("       Command line option problem (found %c for option value).\n", c_err ); 
 } 
 
 void Maskopts::print_usage_env(const char *c_err) {
-   printf("Usage: AMASK_WAITSECS=<int>(sec) AMASK_VIEW=s|m (single/multi line) AMASK_PRINTSPEED= f|s (fast/slow) AMASK_USAGE=u \n"); 
+   printf("Usage: AMASK_WAITSECS=<int>(sec) AMASK_VIEW=s|m (single/multi line) AMASK_PRINTSPEED= f|s\n"); 
    if(c_err != NULL) printf("       Problem with %s option.\n", c_err ); 
 } 

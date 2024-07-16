@@ -428,23 +428,23 @@ There are several useful options that can be used on the \verb+amask+ \verb+-omp
 \verb+-hybrid+ execution command lines.  They are summarized in Table \ref{amaskopts} .
 
 By default, after the masks are printed to standard out, a load is created on each process
-for 10 seconds so that the location of the processes can be viewed with the \verb+top+ 
-utility. The duration of the load can be changed with the wait option (\verb+-w+). Include
+for 5 seconds so that the location of the processes can be viewed with the \verb+top+ or \verb+htop+ 
+utilities. The duration of the load can be changed with the wait option (\verb+-w+). Include
 the number of seconds (integer) as an argument to the option. 
 
-By default there is a delay between printing each map. The delay can be eliminated by specifying
-the fast argument for the printing option, \verb+-pf+.
+By default each map is printed immediately. A 0.3sec delay can be introduced  by specifying
+the slow argument for the printing option, \verb+-ps+.
 
-When SMT is detected the listing defaults to a core versus process view (with a
-separate line for each SMT thread in the core).  
-In this case, adding the header group number to the digit in each row gives the core-id.
-Specify \verb+-vk+ option (kernel view) to obtain the normal Linux ``kernel'' view of
+When HyperThreading is detected the listing defaults to a multi-line view (with a
+separate line for each hardware thread, HW0 and HW1, in the core).  
+In this case, an additional constant must be added to the column value to obtain the second HW core-id.
+Specify \verb+-vs+ option (single) to obtain the normal Linux ``kernel'' view of
 proc-id versus process.
 
 
-As described above, an argument of \verb+s+ with the listing \verb+-l+ option forces the 
-matrix listings to be Simultaneous Multi-Threads versus
-processes; that is, affinity masks are listed with proc-ids. 
+As described above, an argument of \verb+s+ with the listing \verb+-v+ option forces the 
+matrix listings to be a single line representing proc-ids (without regard to hardware thread sharing);
+that is, it is a kernel mask.
 
 %, not the processor ids as found in the /proc/cpuinfo. 
 

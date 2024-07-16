@@ -15,7 +15,7 @@ class Maskopts{
 
   private:
   static int  w;  // wait time (sec)
-  static char v,p,u;  // view, printing and usage
+  static char v,p,h;  // view, printing and usage
   static bool setbycmdline ;
 
   public:
@@ -29,12 +29,12 @@ class Maskopts{
     void set_w(int  sec ){ this->w = sec;  }
     void set_v(char cork){ this->v = cork; }
     void set_p(char fors){ this->p = fors; }
-    void set_u(char uor0){ this->u = uor0; }
+    void set_h(char hor0){ this->h = hor0; }
 
     int  get_w(){ return this->w; }
     char get_v(){ return this->v; }
     char get_p(){ return this->p; }
-    char get_u(){ return this->u; }
+    char get_h(){ return this->h; }
 
     bool is_set_by_cmdline(){return this->setbycmdline;}
 
