@@ -43,7 +43,7 @@ static struct option long_opts[] = {
    while ((cint = getopt_long(argc, argv, "w:v:p:h", long_opts, &long_index)) != -1) {
       c=(char)cint; 
       switch (c) {
-printf(" switch, c=%c\n",c); 
+//printf(" switch, c=%c\n",c); 
         case 'w':
                 w=atoi(optarg);
                 argcnt++;  

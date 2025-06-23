@@ -23,7 +23,7 @@ ifeq ($(TACC_SYSTEM),vista)
    CC=nvc++
    OMP_OPTION=-fopenmp
 #   DIAG_OFF=--diag_suppress declared_but_not_referenced
-    DIAG_OFF=--diag_suppress declared_but_not_referenced,set_but_not_used
+    DIAG_OFF=--diag_suppress declared_but_not_referenced,set_but_not_used,implicit_return_from_non_void_function,used_before_set
 endif
 
 ifeq ($(CHPC_HOST),lengau)
