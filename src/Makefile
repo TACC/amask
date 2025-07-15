@@ -3,6 +3,7 @@ ifeq ($(PREFIX),)
     PREFIX := ..
 endif
 
+LOAD_OPT="-O3"
 
 OMP_OPTION=-fopenmp
 CC=icpc  
@@ -24,6 +25,7 @@ ifeq ($(TACC_SYSTEM),vista)
    OMP_OPTION=-fopenmp
 #   DIAG_OFF=--diag_suppress declared_but_not_referenced
     DIAG_OFF=--diag_suppress declared_but_not_referenced,set_but_not_used,implicit_return_from_non_void_function,used_before_set
+    LOAD_OPT=""
 endif
 
 ifeq ($(CHPC_HOST),lengau)
@@ -123,7 +125,7 @@ hybrid_report_mask.o :  hybrid_report_mask.c
 
 
 load.o  : load.c
-	$(CC_SER) $(LOAD_X) -DAMASK_LOAD -O3  -c $< -o $@ $(DIAG_OFF)
+	$(CC_SER) $(LOAD_X) -DAMASK_LOAD $(LOAD_OPT)  -c $< -o $@ $(DIAG_OFF)
 
 boundto.o  : boundto.c
 	$(CC_SER)  -D _GNU_SOURCE -c $< -o $@ $(DIAG_OFF)
