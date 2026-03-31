@@ -1,6 +1,20 @@
 
 ifeq ($(PREFIX),)
-    PREFIX := ..
+#    PREFIX := ..
+     PREFIX := $(abspath $(CURDIR)/..)
+     ifeq ($(findstring $(HOME),$(PREFIX)),$(HOME))
+        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
+     endif
+     ifeq ($(findstring $(SCRATCH),$(PREFIX)),$(SCRATCH))
+        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
+     endif
+     ifeq ($(findstring $(WORK),$(PREFIX)),$(WORK))
+        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
+     endif
+
 endif
 
 LOAD_OPT="-O3"
@@ -150,6 +164,20 @@ install :
 	cp -p $(LIB)            $(PREFIX)/lib
 	cp -p $(EXES)           $(PREFIX)/bin
 	cp -pr ../documents/*   $(PREFIX)/doc
+	@echo ""
+ifeq ("$(SHORTPREFIX)",)
+	@echo " -> Top level install directory is $(PREFIX)/amask"
+	@echo " -> ** Include $(PREFIX)/amask/bin in your PATH."
+	@echo " ->    Include $(PREFIX)/amask/lib in LD_LIBRARY_PATH,"
+	@echo " ->            if you use amask APIs in your code."
+else
+	@echo " -> Top level install directory is $(SHORTPREFIX)/amask"
+	@echo " -> ** Include $(SHORTPREFIX)/amask/bin in your PATH. **"
+	@echo " ->    Include $(SHORTPREFIX)/amask/lib in LD_LIBRARY_PATH,"
+	@echo " ->            if you use amask APIs in your code."
+endif
+	@echo ""
+
 
 clean :
 	echo EXES: $(EXES) 
