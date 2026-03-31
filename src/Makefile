@@ -1,20 +1,18 @@
 
 ifeq ($(PREFIX),)
-#    PREFIX := ..
-     PREFIX := $(abspath $(CURDIR)/..)
-     ifeq ($(findstring $(HOME),$(PREFIX)),$(HOME))
-        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
-	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
-     endif
-     ifeq ($(findstring $(SCRATCH),$(PREFIX)),$(SCRATCH))
-        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
-	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
-     endif
-     ifeq ($(findstring $(WORK),$(PREFIX)),$(WORK))
-        SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
-	SHORTPREFIX  := \$$$(SHORTNODOLLAR)
-     endif
-
+  PREFIX := $(abspath $(CURDIR)/..)
+endif
+ifeq ($(findstring $(HOME),$(PREFIX)),$(HOME))
+  SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+  SHORTPREFIX  := \$$$(SHORTNODOLLAR)
+endif
+ifeq ($(findstring $(SCRATCH),$(PREFIX)),$(SCRATCH))
+  SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+  SHORTPREFIX  := \$$$(SHORTNODOLLAR)
+endif
+ifeq ($(findstring $(WORK),$(PREFIX)),$(WORK))
+  SHORTNODOLLAR := $(shell echo $(PREFIX) | sed "s@$${HOME}@HOME@" )
+  SHORTPREFIX  := \$$$(SHORTNODOLLAR)
 endif
 
 LOAD_OPT="-O3"
@@ -171,10 +169,10 @@ ifeq ("$(SHORTPREFIX)",)
 	@echo " ->    Include $(PREFIX)/amask/lib in LD_LIBRARY_PATH,"
 	@echo " ->            if you use amask APIs in your code."
 else
-	@echo " -> Top level install directory is $(SHORTPREFIX)/amask"
-	@echo " -> ** Include $(SHORTPREFIX)/amask/bin in your PATH. **"
-	@echo " ->    Include $(SHORTPREFIX)/amask/lib in LD_LIBRARY_PATH,"
-	@echo " ->            if you use amask APIs in your code."
+	@echo " => Top level install directory is $(SHORTPREFIX)/amask"
+	@echo " => ** Include $(SHORTPREFIX)/amask/bin in your PATH. **"
+	@echo " =>    Include $(SHORTPREFIX)/amask/lib in LD_LIBRARY_PATH,"
+	@echo " =>            if you use amask APIs in your code."
 endif
 	@echo ""
 
