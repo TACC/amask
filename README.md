@@ -172,7 +172,7 @@ commands should be run in the compiler-mpi environment that the application will
 If you have multiple compiler environments (e.g. gcc/Cray/Intel, etc.) and/or MPI environments
 (OpenMPI, IMPI, MVAPICH2, etc.) please make a modulefile for each.  Creating a modulefile 
 is rather simple with the TACC mkmod utility.
-[mkmod documentation]( https://amask.readthedocs.io/en/latest/ )
+[mkmod documentation]( https://mkmod.readthedocs.io/en/latest/ )
 [github]( https://github.com/tacc/mkmod )
 
 
