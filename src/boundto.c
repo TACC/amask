@@ -11,6 +11,11 @@
 //   F90  NOT IMPLEMENTED YET
 //    call  boundto( bnd2_status, nprocs, nelements_set, int_mask)
 //          integer bnd2_status, nprocs, nelements_set, int_mask(ncpus)
+//   C/C++
+//    void  boundto(int* nelements_set, int* int_mask)
+//   F90  NOT IMPLEMENTED YET
+//    call  boundto( nelements_set, int_mask)
+//          integer  nelements_set, int_mask(ncpus)
 //
 //
 #include <stdio.h>
@@ -63,5 +68,5 @@ int boundto(int* nelements_set, int* int_mask)
           return 0;
 }
 
- int  boundto_(int *nelements_set, int *int_mask){ 
-(int) boundto(      nelements_set,      int_mask);}
+ int       boundto_(int *nelements_set, int *int_mask){ 
+    return boundto(      nelements_set,      int_mask);}

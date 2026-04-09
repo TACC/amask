@@ -48,7 +48,7 @@ int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
 
-int amask_hybrid(){
+void amask_hybrid(){
 
                         // General
 int i,j,ierr;

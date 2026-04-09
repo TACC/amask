@@ -38,7 +38,7 @@ int boundto(int* nelements_set, int* int_mask);
 int get_threads_per_node();
 
 
-int amask_mpi(){
+void amask_mpi(){
 
 int thrd, nthrds, ncpus;
 int rank, nranks;
